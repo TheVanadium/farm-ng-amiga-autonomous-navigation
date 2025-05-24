@@ -5,6 +5,7 @@
 import depthai as dai
 import time
 
+
 # Upload configs and pipeline to the cameras
 ## camera_ip: ip of the camera to upload to
 def uploadService(cameraIp, cameraPort):
@@ -31,11 +32,11 @@ def uploadService(cameraIp, cameraPort):
     # Streaming server node
     ## Link video encoder output to streaming server input
     server = pipeline.create(dai.node.Script)
-    videoEnc.bitstream.link(server.inputs['frame']) 
+    videoEnc.bitstream.link(server.inputs["frame"])
 
     server.setProcessor(dai.ProcessorType.LEON_CSS)
-    server.inputs['frame'].setBlocking(False)
-    server.inputs['frame'].setQueueSize(1)
+    server.inputs["frame"].setBlocking(False)
+    server.inputs["frame"].setQueueSize(1)
 
     # server.setScript(f"""
     # import socket
@@ -63,7 +64,8 @@ def uploadService(cameraIp, cameraPort):
     #         node.warn("Client disconnected")
     # """)
 
-    server.setScript(f"""
+    server.setScript(
+        f"""
     import time
     import socket
     from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -97,7 +99,8 @@ def uploadService(cameraIp, cameraPort):
     with ThreadingSimpleServer(("", {cameraPort}), HTTPHandler) as httpd:
         node.warn(f"Serving RGB MJPEG stream at {cameraIp + ":" + cameraPort + "/rgb"}")
         httpd.serve_forever()
-    """)
+    """
+    )
 
     device_info = dai.DeviceInfo(cameraIp)
 

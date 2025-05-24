@@ -12,5 +12,5 @@ o3d.visualization.draw_geometries(
     window_name="Loaded PLY Point Cloud",
     width=800,
     height=600,
-    point_show_normal=False
+    point_show_normal=False,
 )
