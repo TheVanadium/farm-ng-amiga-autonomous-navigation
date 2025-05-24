@@ -336,7 +336,7 @@ class Camera:
 
         # R = rotation matrix , t = translation vector
         R, t = self.transform_matrix[:3, :3], self.transform_matrix[:3, 3]
-        t *= 1000 # Convert from meters to mm
+        t *= 1000  # Convert from meters to mm
         transformed_points = raw_points @ R.T - t.reshape((1, 3))
 
         self.point_cloud.points = o3d.utility.Vector3dVector(transformed_points)
@@ -386,7 +386,9 @@ class Camera:
     def make_handler(self, frame_queue: dai.DataOutputQueue):
         class MJPEGHandler(BaseHTTPRequestHandler):
             def end_headers(self):
-                self.send_header("Access-Control-Allow-Origin", f"http://0.0.0.0:{PORT}")
+                self.send_header(
+                    "Access-Control-Allow-Origin", f"http://0.0.0.0:{PORT}"
+                )
                 self.send_header("Access-Control-Allow-Methods", "GET, OPTIONS")
                 self.send_header("Access-Control-Allow-Headers", "Content-Type")
                 self.send_header("Access-Control-Allow-Private-Network", "true")

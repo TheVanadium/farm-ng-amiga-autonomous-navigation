@@ -9,3 +9,5 @@ amiga-app/backend/cameraBackend/.cache/
 
 data_analysis/pointclouds/
 amiga-app/pointclouds/
+
+venv/

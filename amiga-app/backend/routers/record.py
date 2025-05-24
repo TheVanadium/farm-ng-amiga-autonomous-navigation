@@ -22,8 +22,11 @@ from backend.config import *
 
 router = APIRouter()
 
+
 @router.post("/record/start/{track_name}")
-async def start_recording(request: Request, track_name: str, background_tasks: BackgroundTasks):
+async def start_recording(
+    request: Request, track_name: str, background_tasks: BackgroundTasks
+):
     """Starts recording a track using the filter service client."""
     vars: StateVars = request.state.vars
     recording_active = vars.track_recording
@@ -58,7 +61,8 @@ async def record_track(request: Request, track_name: str, output_dir: Path) -> N
         SubscribeRequest(
             uri=Uri(path=f"/track", query=f"service_name={service_name}"),
             every_n=1,
-        ), decode=True
+        ),
+        decode=True,
     ):
         if not vars.track_recording:
             print("Track Recording stopped.")

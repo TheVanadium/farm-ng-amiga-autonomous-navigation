@@ -17,6 +17,7 @@ from fastapi import Request
 
 router = APIRouter()
 
+
 def estimate_volume(point_cloud: o3d.geometry.PointCloud) -> float:
     """_summary_ Estimate the volume of the point cloud
 
@@ -28,17 +29,16 @@ def estimate_volume(point_cloud: o3d.geometry.PointCloud) -> float:
     """
     colors = np.asarray(point_cloud.colors)
     point_cloud = np.asarray(point_cloud.points)
-    
+
     height_sort = np.argsort(point_cloud[:, 2])
     point_cloud = point_cloud[height_sort]
     colors = colors[height_sort]
 
     num_points = len(point_cloud)
-    
 
     # Bounding box parameters
-    z_lower = point_cloud[round(num_points * .05), 2]
-    z_upper = point_cloud[round(num_points * .75), 2]
+    z_lower = point_cloud[round(num_points * 0.05), 2]
+    z_upper = point_cloud[round(num_points * 0.75), 2]
     # X is in the direction the robot moves
     # so this corresponds to a 1.2m bounding box length
     x_lower = -450
@@ -56,14 +56,13 @@ def estimate_volume(point_cloud: o3d.geometry.PointCloud) -> float:
     box_filter = z_filter & x_filter & y_filter
     filtered_area = (x_upper - x_lower) * (y_upper - y_lower)
 
-
     point_cloud = point_cloud[box_filter]
     colors = colors[box_filter]
 
     average_z = np.mean(point_cloud[:, 2])
     average_height = z_upper - average_z
 
-    volume_estimate = average_height * filtered_area / 1000 # cm^3
+    volume_estimate = average_height * filtered_area / 1000  # cm^3
 
     percent_size_change = (num_points - len(point_cloud)) / num_points
 
@@ -71,6 +70,7 @@ def estimate_volume(point_cloud: o3d.geometry.PointCloud) -> float:
     point_cloud.colors = o3d.utility.Vector3dVector(colors)
 
     return volume_estimate
+
 
 async def generate_yield_estimate(line_name: str) -> float:
     """_summary_
@@ -94,6 +94,7 @@ async def generate_yield_estimate(line_name: str) -> float:
 
     return m * total_volume + b
 
+
 @router.get("get_yield/{line_name}")
 async def get_yield(line_name: str, request: Request):
     pointclouds_dir = f"{POINTCLOUD_DATA_DIR}/{line_name}"
@@ -102,10 +103,10 @@ async def get_yield(line_name: str, request: Request):
     cached_estimate_path = f"{pointclouds_dir}/estimate.txt"
     yield_estimate: float
     if os.path.exists(f"{pointclouds_dir}/estimate.txt"):
-        with open(cached_estimate_path, 'r') as estimate_file:
+        with open(cached_estimate_path, "r") as estimate_file:
             yield_estimate = float(estimate_file.read())
     else:
         yield_estimate = generate_yield_estimate(line_name)
-        with open(cached_estimate_path, 'w') as estimate_file:
+        with open(cached_estimate_path, "w") as estimate_file:
             estimate_file.write(str(yield_estimate))
     return {"message": yield_estimate}

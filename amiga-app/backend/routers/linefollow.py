@@ -161,6 +161,7 @@ def clear_line_data(line_name: str):
         return
     shutil.rmtree(line_path)
 
+
 class LineFollowData(BaseModel):
     num_rows: int
     first_turn_right: bool
@@ -290,9 +291,9 @@ async def handle_image_capture(
     last_image_capture = 0
     # The robot must move a tiny distance at the start of each row
     # To straighten itself
-    initial_distance_offset: float = .5
+    initial_distance_offset: float = 0.5
     # should correspond to the size of the bounding box defined in volume estimation
-    bounding_box_length: float = .5
+    bounding_box_length: float = 0.5
 
     vars.track_follow_id += 1
     track_follow_id = vars.track_follow_id

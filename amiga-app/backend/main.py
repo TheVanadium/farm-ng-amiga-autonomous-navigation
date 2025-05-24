@@ -56,6 +56,7 @@ global oak_manager
 global camera_msg_queue
 camera_msg_queue = Queue()
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Initializing App...")
@@ -78,7 +79,9 @@ async def lifespan(app: FastAPI):
     if no_cameras:
         oak_manager = None
     else:
-        oak_manager = Process(target=startCameras, args=(camera_msg_queue, POINTCLOUD_DATA_DIR))
+        oak_manager = Process(
+            target=startCameras, args=(camera_msg_queue, POINTCLOUD_DATA_DIR)
+        )
         oak_manager.start()
         print(f"Starting oak manager with PID {oak_manager.pid}")
 

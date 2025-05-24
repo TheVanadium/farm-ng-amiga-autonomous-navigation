@@ -9,29 +9,34 @@ if len(device_infos) == 0:
 else:
     print("Found", len(device_infos), "devices")
 
-device_infos.sort(key=lambda x: x.getMxId(), reverse=True) # sort the cameras by their mxId
+device_infos.sort(
+    key=lambda x: x.getMxId(), reverse=True
+)  # sort the cameras by their mxId
 
 cameras: List[Camera] = []
 
 friendly_id = 0
 for device_info in device_infos:
     friendly_id += 1
-    if device_info.name == "10.95.76.10": continue
+    if device_info.name == "10.95.76.10":
+        continue
     cameras.append(Camera(device_info, friendly_id))
 
 selected_camera = cameras[0]
+
 
 def select_camera(friendly_id: int):
     global selected_camera
 
     i = friendly_id - 1
-    if i >= len(cameras) or i < 0: 
-        return None 
+    if i >= len(cameras) or i < 0:
+        return None
 
     selected_camera = cameras[i]
     print(f"Selected camera {friendly_id}")
 
     return selected_camera
+
 
 select_camera(1)
 
@@ -39,19 +44,16 @@ while True:
     key = cv2.waitKey(1)
 
     # QUIT - press `q` to quit
-    if key == ord('q'):
+    if key == ord("q"):
         break
-    
+
     # CAMERA SELECTION - use the number keys to select a camera
-    if key >= ord('1') and key <= ord('9'):
-        select_camera(key - ord('1') + 1)
+    if key >= ord("1") and key <= ord("9"):
+        select_camera(key - ord("1") + 1)
 
     # POSE ESTIMATION - press `p` to estimate the pose of the selected camera and save it to file
-    if key == ord('p'):
+    if key == ord("p"):
         selected_camera.estimate_pose()
 
     for camera in cameras:
         camera.update()
-
-
-        

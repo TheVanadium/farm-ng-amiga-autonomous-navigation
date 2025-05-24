@@ -7,8 +7,15 @@ from matplotlib import colors
 import config
 from host_sync import HostSync
 
+
 class Camera:
-    def __init__(self, device_info: dai.DeviceInfo, friendly_id: int, show_video: bool = True, show_point_cloud: bool = True):
+    def __init__(
+        self,
+        device_info: dai.DeviceInfo,
+        friendly_id: int,
+        show_video: bool = True,
+        show_point_cloud: bool = True,
+    ):
         self.show_video = show_video
         self.show_point_cloud = show_point_cloud
         self.show_depth = False
@@ -20,12 +27,19 @@ class Camera:
 
         self.device.setIrLaserDotProjectorBrightness(0)
 
-        self.intrinsic_mat = np.array(self.device.readCalibration().getCameraIntrinsics(dai.CameraBoardSocket.RGB, -1, -1))
+        self.intrinsic_mat = np.array(
+            self.device.readCalibration().getCameraIntrinsics(
+                dai.CameraBoardSocket.RGB, -1, -1
+            )
+        )
         print(self.intrinsic_mat)
 
-
-        self.image_queue = self.device.getOutputQueue(name="image", maxSize=10, blocking=False)
-        self.depth_queue = self.device.getOutputQueue(name="depth", maxSize=10, blocking=False)
+        self.image_queue = self.device.getOutputQueue(
+            name="image", maxSize=10, blocking=False
+        )
+        self.depth_queue = self.device.getOutputQueue(
+            name="depth", maxSize=10, blocking=False
+        )
         self.host_sync = HostSync(["image", "depth"])
 
         self.image_frame = None
@@ -42,11 +56,17 @@ class Camera:
         # point cloud window
         if show_point_cloud:
             self.point_cloud_window = o3d.visualization.Visualizer()
-            self.point_cloud_window.create_window(window_name=f"[{self.friendly_id}] Point Cloud - mxid: {self.mxid}")
+            self.point_cloud_window.create_window(
+                window_name=f"[{self.friendly_id}] Point Cloud - mxid: {self.mxid}"
+            )
             self.point_cloud_window.add_geometry(self.point_cloud)
-            origin = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.3, origin=[0, 0, 0])
+            origin = o3d.geometry.TriangleMesh.create_coordinate_frame(
+                size=0.3, origin=[0, 0, 0]
+            )
             self.point_cloud_window.add_geometry(origin)
-            self.point_cloud_window.get_view_control().set_constant_z_far(config.max_range*2)
+            self.point_cloud_window.get_view_control().set_constant_z_far(
+                config.max_range * 2
+            )
 
         self._load_calibration()
 
@@ -63,28 +83,38 @@ class Camera:
             self.cam_to_world = extrinsics["cam_to_world"]
             self.world_to_cam = extrinsics["world_to_cam"]
         except:
-            raise RuntimeError(f"Could not load calibration data for camera {self.mxid} from {path}!")
+            raise RuntimeError(
+                f"Could not load calibration data for camera {self.mxid} from {path}!"
+            )
 
         calibration = self.device.readCalibration()
         self.intrinsics = calibration.getCameraIntrinsics(
-            dai.CameraBoardSocket.RGB if config.COLOR else dai.CameraBoardSocket.RIGHT, 
-            dai.Size2f(*self.image_size)
+            dai.CameraBoardSocket.RGB if config.COLOR else dai.CameraBoardSocket.RIGHT,
+            dai.Size2f(*self.image_size),
         )
 
         self.pinhole_camera_intrinsic = o3d.camera.PinholeCameraIntrinsic(
-            *self.image_size, self.intrinsics[0][0], self.intrinsics[1][1], self.intrinsics[0][2], self.intrinsics[1][2]
+            *self.image_size,
+            self.intrinsics[0][0],
+            self.intrinsics[1][1],
+            self.intrinsics[0][2],
+            self.intrinsics[1][2],
         )
 
         try:
-            self.point_cloud_alignment = np.load(f"{config.calibration_data_dir}/point_cloud_alignment_{self.mxid}.npy")
+            self.point_cloud_alignment = np.load(
+                f"{config.calibration_data_dir}/point_cloud_alignment_{self.mxid}.npy"
+            )
         except:
             self.point_cloud_alignment = np.eye(4)
 
         print(self.pinhole_camera_intrinsic)
 
     def save_point_cloud_alignment(self):
-        np.save(f"{config.calibration_data_dir}/point_cloud_alignment_{self.mxid}.npy", self.point_cloud_alignment)
-    
+        np.save(
+            f"{config.calibration_data_dir}/point_cloud_alignment_{self.mxid}.npy",
+            self.point_cloud_alignment,
+        )
 
     def _create_pipeline(self):
         pipeline = dai.Pipeline()
@@ -102,9 +132,9 @@ class Camera:
         # Apply ToF settings
         cfg = tof.initialConfig.get()
         cfg.enableOpticalCorrection = True
-        cfg.enablePhaseShuffleTemporalFilter = False # Temporal smoothing
-        cfg.phaseUnwrappingLevel = 0 # Not needed because of close range
-        cfg.phaseUnwrapErrorThreshold = 128 # Reject more noise
+        cfg.enablePhaseShuffleTemporalFilter = False  # Temporal smoothing
+        cfg.phaseUnwrappingLevel = 0  # Not needed because of close range
+        cfg.phaseUnwrapErrorThreshold = 128  # Reject more noise
 
         tof.initialConfig.set(cfg)
 
@@ -137,8 +167,6 @@ class Camera:
         self.image_size = cam_rgb.getIspSize()
         self.pipeline = pipeline
 
-
-
     def update(self):
         for queue in [self.depth_queue, self.image_queue]:
             new_msgs = queue.tryGetAll()
@@ -149,12 +177,18 @@ class Camera:
         msg_sync = self.host_sync.get()
         if msg_sync is None:
             return
-        
+
         self.depth_frame = msg_sync["depth"].getFrame()
         self.image_frame = msg_sync["image"].getCvFrame()
-        self.depth_visualization_frame = cv2.normalize(self.depth_frame, None, 255, 0, cv2.NORM_INF, cv2.CV_8UC1)
-        self.depth_visualization_frame = cv2.equalizeHist(self.depth_visualization_frame)
-        self.depth_visualization_frame = cv2.applyColorMap(self.depth_visualization_frame, cv2.COLORMAP_HOT)
+        self.depth_visualization_frame = cv2.normalize(
+            self.depth_frame, None, 255, 0, cv2.NORM_INF, cv2.CV_8UC1
+        )
+        self.depth_visualization_frame = cv2.equalizeHist(
+            self.depth_visualization_frame
+        )
+        self.depth_visualization_frame = cv2.applyColorMap(
+            self.depth_visualization_frame, cv2.COLORMAP_HOT
+        )
 
         if self.show_video:
             if self.show_depth:
@@ -170,8 +204,9 @@ class Camera:
             self.point_cloud_window.poll_events()
             self.point_cloud_window.update_renderer()
 
-
-    def rgbd_to_point_cloud(self, depth_frame, image_frame, downsample=False, remove_noise=False):
+    def rgbd_to_point_cloud(
+        self, depth_frame, image_frame, downsample=False, remove_noise=False
+    ):
         depth_frame = depth_frame[:400, :]
         rgb_o3d = o3d.geometry.Image(image_frame)
         df = np.copy(depth_frame).astype(np.float32)
@@ -189,15 +224,19 @@ class Camera:
             point_cloud = point_cloud.voxel_down_sample(voxel_size=0.01)
 
         if remove_noise:
-            point_cloud = point_cloud.remove_statistical_outlier(nb_neighbors=50, std_ratio=0.5)[0]
-            point_cloud, _ = point_cloud.remove_radius_outlier( nb_points=16, radius=2.0) # radius in mm
+            point_cloud = point_cloud.remove_statistical_outlier(
+                nb_neighbors=50, std_ratio=0.5
+            )[0]
+            point_cloud, _ = point_cloud.remove_radius_outlier(
+                nb_points=16, radius=2.0
+            )  # radius in mm
 
         self.point_cloud.points = point_cloud.points
         self.point_cloud.colors = point_cloud.colors
 
         # correct upside down z axis
         T = np.eye(4)
-        T[2,2] = -1
+        T[2, 2] = -1
         self.point_cloud.transform(T)
 
         # apply point cloud alignment transform

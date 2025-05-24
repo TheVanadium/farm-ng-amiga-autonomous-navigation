@@ -1,11 +1,7 @@
 from farm_ng.core.event_client_manager import EventClient
 from farm_ng.core.events_file_writer import proto_to_json_file
 from farm_ng.core.event_service_pb2 import EventServiceConfig
-from farm_ng.track.track_pb2 import (
-    Track,
-    TrackFollowRequest,
-    TrackFollowerState
-)
+from farm_ng.track.track_pb2 import Track, TrackFollowRequest, TrackFollowerState
 from farm_ng.filter.filter_pb2 import FilterState
 from farm_ng_core_pybind import Isometry3F64
 from farm_ng_core_pybind import Pose3F64
@@ -16,6 +12,7 @@ from farm_ng.core.events_file_reader import proto_from_json_file
 
 import numpy as np
 
+
 def format_track(track_waypoints: list[Pose3F64]) -> Track:
     """Pack the track waypoints into a Track proto message.
 
@@ -24,7 +21,10 @@ def format_track(track_waypoints: list[Pose3F64]) -> Track:
     """
     return Track(waypoints=[pose.to_proto() for pose in track_waypoints])
 
-def walk_towards(current_pose: Pose3F64, target_position: np.array, goal_counter: int) -> tuple[list[Pose3F64], int]:
+
+def walk_towards(
+    current_pose: Pose3F64, target_position: np.array, goal_counter: int
+) -> tuple[list[Pose3F64], int]:
     """_summary_
     Given the robot's current pose, outputs the list of poses the robot must use in their track to walk towards the target position
     Also outputs the index of the waypoint where the robot begins walking forward
@@ -40,23 +40,27 @@ def walk_towards(current_pose: Pose3F64, target_position: np.array, goal_counter
     cos_theta = rotation_matrix[0][0]
     sin_theta = rotation_matrix[1][0]
     current_angle = np.acos(cos_theta)
-    if (sin_theta < 0):
+    if sin_theta < 0:
         current_angle = -current_angle
     diff = target_position - current_position
     distance = np.linalg.norm(diff)
     target_angle = np.acos(diff[0] / distance)
     if diff[1] < 0:
         target_angle = -target_angle
-    
+
     angle_diff = target_angle - current_angle
 
     turn = create_turn_segment(current_pose, angle_diff, f"goal{goal_counter}")
     print(f"Goal {goal_counter}: Walking from {current_position} to {target_position}")
-    print(f"Facing {current_angle}, target: {target_angle}. Rotating {angle_diff} radians")
+    print(
+        f"Facing {current_angle}, target: {target_angle}. Rotating {angle_diff} radians"
+    )
     if turn != []:
         current_pose = turn[-1]
     cutoff = len(turn)
-    turn.extend(create_straight_segment(current_pose, distance, f"goal{goal_counter + 1}"))
+    turn.extend(
+        create_straight_segment(current_pose, distance, f"goal{goal_counter + 1}")
+    )
     print(f"Walking forward {distance} meters")
     return turn, cutoff
 
@@ -90,7 +94,7 @@ def create_straight_segment(
         straight_segment: Pose3F64 = Pose3F64(
             a_from_b=Isometry3F64([segment_distance, 0, 0], Rotation3F64.Rz(0)),
             frame_a=segment_poses[-1].frame_b,
-            frame_b=f"{next_frame_b}.{counter}"
+            frame_b=f"{next_frame_b}.{counter}",
         )
         if first_segment:
             segment_poses = [previous_pose * straight_segment]
@@ -106,6 +110,7 @@ def create_straight_segment(
     segment_poses[-1].frame_b = next_frame_b
     return segment_poses
 
+
 def create_turn_segment(
     previous_pose: Pose3F64, angle: float, next_frame_b: str, spacing: float = 0.1
 ) -> list[Pose3F64]:
@@ -120,10 +125,10 @@ def create_turn_segment(
         list[Pose3F64]: The poses of the turn segment.
     """
     # Normalize the angle within 0->2pi
-    angle = angle % (2*np.pi)
+    angle = angle % (2 * np.pi)
     # Don't rotate 270deg when we can rotate -90deg
     if angle > np.pi:
-        angle = -2*np.pi + angle
+        angle = -2 * np.pi + angle
     # Create a container to store the track segment waypoints
     segment_poses: list[Pose3F64] = [previous_pose]
 
@@ -141,7 +146,7 @@ def create_turn_segment(
         turn_segment: Pose3F64 = Pose3F64(
             a_from_b=Isometry3F64.Rz(segment_angle),
             frame_a=segment_poses[-1].frame_b,
-            frame_b=f"{next_frame_b}.{counter}"
+            frame_b=f"{next_frame_b}.{counter}",
         )
         if first_segment:
             segment_poses = [previous_pose * turn_segment]

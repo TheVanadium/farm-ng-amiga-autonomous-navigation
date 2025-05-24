@@ -21,32 +21,35 @@ def startStreamingServer(server_stream_queue: Queue, STREAM_FPS, stream_port: in
             # self.wfile = self.request.makefile('wb', buffering=0)
 
         def do_GET(self):
-                if self.path == '/rgb':
-                    try:
-                        self.send_response(200)
-                        self.send_header('Content-type', 'multipart/x-mixed-replace; boundary=--jpgboundary')
+            if self.path == "/rgb":
+                try:
+                    self.send_response(200)
+                    self.send_header(
+                        "Content-type",
+                        "multipart/x-mixed-replace; boundary=--jpgboundary",
+                    )
+                    self.end_headers()
+                    while True:
+                        frame = server_stream_queue.get()
+
+                        self.wfile.write("--jpgboundary".encode())
+                        self.wfile.write(bytes([13, 10]))
+                        self.send_header("Content-type", "image/jpeg")
+                        self.send_header("Content-length", str(len(frame)))
                         self.end_headers()
-                        while True:
-                            frame = server_stream_queue.get()
+                        self.wfile.write(frame)
+                        self.end_headers()
+                        time.sleep(delay)
 
-                            self.wfile.write("--jpgboundary".encode())
-                            self.wfile.write(bytes([13, 10]))
-                            self.send_header('Content-type', 'image/jpeg')
-                            self.send_header('Content-length', str(len(frame)))
-                            self.end_headers()
-                            self.wfile.write(frame)
-                            self.end_headers()
-                            time.sleep(delay)
-
-                    except Exception as ex:
-                        return
+                except Exception as ex:
+                    return
 
         # def do_GET(self):
         #     if self.path != "/rgb":
         #         return self.send_error(404)
         #
         #     self.send_response(200)
-        #     self.send_header("Content-Type", 
+        #     self.send_header("Content-Type",
         #                      "multipart/x-mixed-replace; boundary=jpgboundary")
         #     self.send_header("Connection", "keep-alive")
         #     self.send_header("Transfer-Encoding", "chunked")
@@ -76,31 +79,31 @@ def startStreamingServer(server_stream_queue: Queue, STREAM_FPS, stream_port: in
         #     except (BrokenPipeError, ConnectionResetError):
         #         return
 
-            # if self.path == "/rgb":
-            #     try:
-            #         self.send_response(200)
-            #         self.send_header(
-            #             "Content-type",
-            #             "multipart/x-mixed-replace; boundary=--jpgboundary",
-            #         )
-            #         self.end_headers()
-            #         while True:
-            #             frame_data = server_stream_queue.get()
-            #
-            #             self.wfile.write("--jpgboundary".encode())
-            #             self.wfile.write(bytes([13, 10]))
-            #             self.send_header("Content-type", "image/jpeg")
-            #             # self.send_header("Content-length", str(len(frame.getData())))
-            #             self.send_header("Content-length", str(len(frame_data)))
-            #             self.end_headers()
-            #             # self.wfile.write(frame.getData())
-            #             self.wfile.write(frame_data)
-            #             self.end_headers()
-            #             self.wfile.flush()
-            #             time.sleep(delay)
-            #
-            #     except Exception as ex:
-            #         print("Client disconnected")
+        # if self.path == "/rgb":
+        #     try:
+        #         self.send_response(200)
+        #         self.send_header(
+        #             "Content-type",
+        #             "multipart/x-mixed-replace; boundary=--jpgboundary",
+        #         )
+        #         self.end_headers()
+        #         while True:
+        #             frame_data = server_stream_queue.get()
+        #
+        #             self.wfile.write("--jpgboundary".encode())
+        #             self.wfile.write(bytes([13, 10]))
+        #             self.send_header("Content-type", "image/jpeg")
+        #             # self.send_header("Content-length", str(len(frame.getData())))
+        #             self.send_header("Content-length", str(len(frame_data)))
+        #             self.end_headers()
+        #             # self.wfile.write(frame.getData())
+        #             self.wfile.write(frame_data)
+        #             self.end_headers()
+        #             self.wfile.flush()
+        #             time.sleep(delay)
+        #
+        #     except Exception as ex:
+        #         print("Client disconnected")
 
     class ThreadingSimpleServer(HTTPServer):
         pass
