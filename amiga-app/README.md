@@ -10,6 +10,42 @@ The robot can navigate predefined paths or follow crop rows while automatically 
 
 # Repository Structure
 
+amiga-app/
+├── backend/                    # Python FastAPI server
+│   ├── cameras/               # Camera management and calibration
+│   ├── pointcloud/            # 3D point cloud processing
+│   ├── track_management/      # Navigation track handling
+│   ├── line_following/        # Crop row following algorithms
+│   └── main.py               # FastAPI server entry point
+├── ts/                        # React TypeScript frontend
+│   ├── src/
+│   │   ├── components/       # Reusable UI components
+│   │   ├── pages/           # Main application screens
+│   │   ├── utils/           # Utility functions
+│   │   └── App.tsx          # Main application component
+│   ├── package.json         # Frontend dependencies
+│   └── vite.config.ts       # Build configuration
+├── tracks/                    # Navigation track storage
+│   └── *.json               # Waypoint sequences for robot movement
+├── lines/                     # Line track configurations
+│   └── *.json               # Crop row navigation with calibration data
+├── calibration_data/          # Camera calibration files
+│   ├── camera_matrices/     # Intrinsic camera parameters
+│   └── alignment_transforms/ # Inter-camera alignment data
+├── pointcloud_data/           # 3D scan results
+│   ├── raw/                 # Unprocessed point clouds
+│   ├── aligned/             # Calibrated and merged data
+│   └── processed/           # Analysis-ready datasets
+├── build.sh                   # Application build script
+├── install.sh                 # Amiga system installation
+├── uninstall.sh              # System removal script
+├── manifest.json             # Amiga app service configuration
+├── config.json               # Service connection parameters
+├── service_config.json       # Subscription and logging config
+├── requirements.txt          # Python dependencies
+├── package.json             # Root package configuration
+└── README.md                # YOU ARE HERE
+
 ### Main Directories
 
 - **`backend/`** 
