@@ -1,10 +1,10 @@
 # Project Summary
 
 - **Multi-Camera 3D Scanning**: Three OAK-D ToF cameras capture aligned point clouds of crop fields
-- **Intelligent Navigation**: Line following for systematic crop row traversal and custom track recording/playback
-- **Real-time Processing**: Live camera feeds, point cloud generation, and robot position tracking
+- **Automated Navigation**: Line following for systematic crop row traversal and custom track recording/playback
+- **Real time Processing**: Live camera feeds, point cloud generation, and robot position tracking
 - **Crop Analysis**: Volume estimation from point cloud data with yield calculations
-- **Web Interface**: React-based UI for camera control, track management, and data visualization
+- **Web UI**: React based UI for camera control, track management, and data visualization
 
 The robot can navigate predefined paths or follow crop rows while automatically capturing 3D data, allowing automated yield estimation of a field.
 
