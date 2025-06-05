@@ -1,0 +1,25 @@
+name: Lint mypy
+
+on:
+  push:
+    paths:
+      - '*.py'
+  pull_request:
+    paths:
+      - '*.py'
+
+jobs:
+  mypy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11.x
+          architecture: x64
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install packages
+        run: pip install -r requirements.txt
+      - name: Run mypy
+        run: mypy --disallow-untyped-defs .
