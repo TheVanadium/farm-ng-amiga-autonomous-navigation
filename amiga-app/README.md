@@ -9,7 +9,7 @@
 The robot can navigate predefined paths or follow crop rows while automatically capturing 3D data, allowing automated yield estimation of a field.
 
 # Repository Structure
-
+```
 amiga-app/
 ├── backend/                    # Python FastAPI server
 │   ├── cameras/               # Camera management and calibration
@@ -45,6 +45,7 @@ amiga-app/
 ├── requirements.txt          # Python dependencies
 ├── package.json             # Root package configuration
 └── README.md                # YOU ARE HERE
+```
 
 ### Main Directories
 
