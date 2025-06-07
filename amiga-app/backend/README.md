@@ -1,3 +1,5 @@
+# Backend API
+
 This backend provides REST APIs and WebSocket connections for:
 
 - **Track Management**: Recording, editing, and following GPS-based navigation tracks
@@ -28,69 +30,44 @@ backend/
 └── pointcloud_data/       # Generated point cloud files
 ```
 
-## Features
+## Development Quickstart
 
-### Track Recording & Following
+### Hardware Requirements
 
-- **GPS-based Navigation**: Record and replay precise navigation tracks using the farm-ng filter service
-- **Real-time Tracking**: Subscribe to robot pose updates and build waypoint sequences
-- **Track Management**: Create, edit, delete, and list stored navigation tracks
-- **Robot Control**: Start, pause, and stop autonomous track following
+- Farm-ng Amiga robot platform
+- OAK-D cameras connected to Amiga (up to 3 supported)
+- Network connectivity for camera communication
 
-### Camera System
-
-- **Multi-Camera Support**: Manages multiple OAK-D cameras with Time-of-Flight depth sensing
-- **RGB Streaming**: MJPEG video streams accessible via HTTP endpoints
-- **Depth Processing**: Real-time depth frame capture and processing
-- **Calibration**: Camera extrinsic calibration for multi-camera fusion
-
-### Point Cloud Processing
-
-- **3D Reconstruction**: Generate colorized point clouds from RGB-D camera data
-- **Multi-Camera Fusion**: Align and merge point clouds from multiple viewpoints
-- **Data Export**: Save point clouds in PLY format for external processing
-### Line Following
-
-- **Agricultural Rows**: Navigate predefined crop rows with automatic turn handling
-- **Turn Calibration**: Learn turn distances and patterns for consistent row transitions
-- **Row Planning**: Generate navigation paths for multi-row farming operations
-- **Adaptive Navigation**: Handle varying row lengths and field configurations
-
-## Installation
-
-### Prerequisites
+### Software Requirements
 
 - Python 3.8+
 - DepthAI SDK for OAK cameras
 - farm-ng SDK for robot integration
 - Access to farm-ng robot
 - SSH perms to farm-ng robot
-- Open3D for point cloud processing
 
-### Dependencies
-
-bash
+### Runing the Backend
 
 ```bash
+# install dependencies
 pip install fastapi uvicorn
 pip install depthai opencv-python numpy
 pip install open3d
-pip install farm-ng-core farm-ng-track farm-ng-filter
+pip install farm-ng-core farm-ng-track farm-ng-field_perimeter
+
+# run server
+python main.py
+
+# test camera system
+python test.py
+# Use 'a' to align cameras, 's' to save point clouds
 ```
-
-### Hardware Requirements
-
-- Farm-ng Amiga robot platform
-- OAK-D cameras (up to 3 supported)
-- Network connectivity for camera communication
 
 ## Configuration
 
 ### Environment Setup
 
 Key configuration variables in `config.py`:
-
-python
 
 ```python
 TRACKS_DIR = "./tracks/"              # Navigation track storage
@@ -103,8 +80,6 @@ PORT = 8042                           # API server port
 ### Camera Configuration
 
 Update camera IP addresses in `oakManager.py`:
-
-python
 
 ```python
 cameraIps = [
@@ -154,8 +129,6 @@ cameraIps = [
 
 ### Recording a Navigation Track
 
-python
-
 ```python
 import requests
 
@@ -172,8 +145,6 @@ print(response.json())  # {"message": "Recording stopped successfully."}
 
 ### Following a Track
 
-python
-
 ```python
 # Start following
 response = requests.post("http://localhost:8042/follow/start/field_perimeter")
@@ -188,8 +159,6 @@ response = requests.post("http://localhost:8042/follow/stop")
 ```
 
 ### Line Following for Row Crops
-
-python
 
 ```python
 # Record a line (single row)
@@ -209,8 +178,6 @@ requests.post("http://localhost:8042/line/follow/corn_row_1", json=data)
 
 ### Point Cloud Processing
 
-python
-
 ```python
 # Align cameras
 requests.get("http://localhost:8042/pointcloud/align")
@@ -222,8 +189,6 @@ requests.get("http://localhost:8042/pointcloud/save")
 ## Data Formats
 
 ### Track Format (JSON)
-
-json
 
 ```json
 {
@@ -246,8 +211,6 @@ json
 
 ### Line Format (JSON)
 
-json
-
 ```json
 {
   "start": [6484.18, -5622.38, 0],
@@ -255,6 +218,8 @@ json
   "turn_length": 2.5
 }
 ```
+
+## Errors/Exceptions
 
 ### Camera Issues
 
@@ -273,21 +238,3 @@ json
 - **Alignment Failure**: Ensure sufficient visual overlap between cameras
 - **Performance**: Reduce point cloud density or processing frequency
 - **Export Problems**: Check write permissions in pointcloud_data directory
-
-### Running the Server
-
-bash
-
-```bash
-cd backend
-python main.py
-```
-
-### Testing Camera System
-
-bash
-
-```bash
-python test.py
-# Use 'a' to align cameras, 's' to save point clouds
-```
