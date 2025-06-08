@@ -6,6 +6,7 @@ from typing import List
 
 import numpy as np
 import open3d as o3d
+import DracoPy
 
 from .camera import Camera
 
@@ -80,16 +81,17 @@ class PointCloudFusion:
             camera.update()
             camera_path = f"{self._POINTCLOUD_DATA_DIR}{line_name}/row_{row_number}/capture_{capture_number}/{camera._camera_ip}.ply"
             os.makedirs(os.path.dirname(camera_path), exist_ok=True)
-            o3d.io.write_point_cloud(camera_path, camera.point_cloud)
+            o3d.io.write_point_cloud(camera_path, self.compress_point_cloud(camera.point_cloud))
 
-        fused_point_cloud = (
-            self._cameras[0].point_cloud
-            + self._cameras[1].point_cloud
-            + self._cameras[2].point_cloud
-        )
-        combined_path = f"{self._POINTCLOUD_DATA_DIR}{line_name}/row_{row_number}/capture_{capture_number}/combined.ply"
-        os.makedirs(os.path.dirname(combined_path), exist_ok=True)
-        o3d.io.write_point_cloud(combined_path, fused_point_cloud)
+        # Temporarily disable. We can combine later in data analysis
+        # fused_point_cloud = (
+        #     self._cameras[0].point_cloud
+        #     + self._cameras[1].point_cloud
+        #     + self._cameras[2].point_cloud
+        # )
+        # combined_path = f"{self._POINTCLOUD_DATA_DIR}{line_name}/row_{row_number}/capture_{capture_number}/combined.ply"
+        # os.makedirs(os.path.dirname(combined_path), exist_ok=True)
+        # o3d.io.write_point_cloud(combined_path, fused_point_cloud)
         print("Saved point cloud")
 
     def get_point_cloud(self) -> o3d.geometry.PointCloud:
@@ -101,3 +103,33 @@ class PointCloudFusion:
             + self._cameras[2].point_cloud
         )
         return fused_point_cloud
+
+    def compress_point_cloud(
+        self,
+        pcd,
+        quantization_bits: int = 14,
+        compression_level: int = 5,
+    ):
+        """
+        Compress an Open3D point cloud using DracoPy.
+
+        Args:
+            pcd: Open3D point cloud object.
+            quantization_bits: Number of quantization bits for position attributes.
+            compression_level: Compression level (0-10).
+        """
+
+        points = np.asarray(pcd.points, dtype=np.float32)
+        # Convert normalized floats [0,1] to uint8 [0,255]
+        colors = (np.asarray(pcd.colors) * 255).astype(np.uint8)
+
+        # Encode to Draco binary
+        draco_binary = DracoPy.encode(
+            points,
+            colors=colors,
+            quantization_bits=quantization_bits,
+            compression_level=compression_level
+        )
+
+        return draco_binary
+
