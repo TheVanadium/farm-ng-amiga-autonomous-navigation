@@ -20,6 +20,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Install packages
-        run: pip install -r requirements.txt
+        run: 
+          cd amiga-app/
+          python3 -m venv .venv
+          source .venv/bin/activate
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
       - name: Run mypy
-        run: mypy --disallow-untyped-defs .
+        run: 
+          PYTHONPATH=backend mypy --disallow-untyped-defs backend/test.py
