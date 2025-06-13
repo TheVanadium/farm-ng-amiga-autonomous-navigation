@@ -28,7 +28,7 @@ from farm_ng.core.event_client_manager import EventClient
 from fastapi import WebSocket, WebSocketDisconnect
 from farm_ng.core.event_service_pb2 import SubscribeRequest
 from farm_ng.core.uri_pb2 import Uri
-from google.protobuf.json_format import MessageToJson # type: ignore
+from google.protobuf.json_format import MessageToJson  # type: ignore
 
 
 import uvicorn
@@ -57,6 +57,7 @@ global oak_manager
 oak_manager: Optional[Process] = None
 global camera_msg_queue
 camera_msg_queue: Queue = Queue()
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[dict, None]:
@@ -120,6 +121,7 @@ app.include_router(follow.router)
 app.include_router(linefollow.router)
 app.include_router(pointcloud.router)
 
+
 # not sure why params are necessary but won't touch it in case the robot complains
 # could use testing
 def handle_sigterm(signum: Any, frame: Any) -> None:
@@ -176,7 +178,7 @@ if __name__ == "__main__":
     try:
         PORT = config.PORT
     except AttributeError:
-        raise  AttributeError(
+        raise AttributeError(
             "PORT is not defined in the config module. Please set it before running the server."
         )
 
