@@ -23,10 +23,10 @@ jobs:
         run: |
           cd amiga-app/
           python3 -m venv .venv
-          source .venv/bin/activate
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       - name: Run mypy
         run: |
-          pip install mypy
+          source .venv/bin/activate
+          cd amiga-app/
           PYTHONPATH=backend mypy --disallow-untyped-defs backend/*.py
