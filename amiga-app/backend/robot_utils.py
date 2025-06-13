@@ -52,7 +52,9 @@ def walk_towards(
         current_pose = turn[-1]
     cutoff = len(turn)
     turn.extend(
-        create_straight_segment(current_pose, float(distance), f"goal{goal_counter + 1}")
+        create_straight_segment(
+            current_pose, float(distance), f"goal{goal_counter + 1}"
+        )
     )
     print(f"Walking forward {distance} meters")
     return turn, cutoff
