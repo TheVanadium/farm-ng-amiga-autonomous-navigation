@@ -27,6 +27,6 @@ jobs:
           pip install -r requirements.txt
       - name: Run mypy
         run: |
-          source .venv/bin/activate
           cd amiga-app/
+          source .venv/bin/activate
           PYTHONPATH=backend mypy --disallow-untyped-defs backend/*.py
