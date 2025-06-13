@@ -1,5 +1,0 @@
-opencv-python
-depthai
-numpy
-open3d; platform_machine != "armv7l"
-matplotlib
