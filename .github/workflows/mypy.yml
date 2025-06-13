@@ -20,7 +20,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Install packages
-        run: 
+        run: |
           cd amiga-app/
           python3 -m venv .venv
           source .venv/bin/activate
