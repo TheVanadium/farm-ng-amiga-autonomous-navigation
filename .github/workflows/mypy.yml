@@ -28,4 +28,4 @@ jobs:
           pip install -r requirements.txt
       - name: Run mypy
         run: 
-          PYTHONPATH=backend mypy --disallow-untyped-defs backend/test.py
+          PYTHONPATH=backend mypy --disallow-untyped-defs backend/*.py
