@@ -3,10 +3,10 @@ name: Lint mypy
 on:
   push:
     paths:
-      - '*.py'
+      - '**/*.py'
   pull_request:
     paths:
-      - '*.py'
+      - '**/*.py'
 
 jobs:
   mypy:
