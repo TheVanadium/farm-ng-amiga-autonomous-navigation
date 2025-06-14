@@ -1,0 +1,22 @@
+name: Build Amiga App
+on:
+  push:
+    paths:
+      - amiga-app/**
+  pull_request:
+    paths:
+      - amiga-app/**
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Make script executable
+        run: |
+          cd amiga-app/
+          chmod +x ./build.sh
+      - name: Run build script
+        run: |
+          cd amiga-app/
+          ./build.sh
