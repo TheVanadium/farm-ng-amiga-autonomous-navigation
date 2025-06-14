@@ -16,9 +16,9 @@ cd amiga-app
 ```
 cd ts
 npm install
-npm run device
+npm run dev
 ```
-The `.env` file must have the VITE_API_URL constant configured to the backend port.
+The `.env` file must have the VITE_API_URL constant configured to the backend port. Note that the Amiga screen's is 1280x800.
 
 #### Backend
 The backend only works on an Amiga device, requiring SSH access. To obtain it, follow the instructions at https://amiga.farm-ng.com/docs/ssh/.
