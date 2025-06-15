@@ -51,7 +51,7 @@ jobs:
           name: frontend-dist
           path: amiga-app/ts/dist
 
-      - name: Install http‑server
+      - name: Install http-server
         run: npm install --prefix amiga-app http-server
 
       - name: Serve build and ping
@@ -98,7 +98,7 @@ jobs:
           pip install farm_ng_amiga-2.3.4-py3-none-any.whl
           pip install -r requirements.txt
 
-      - name: Add mock manifest
+      - name: Mock manifest
         run: |
           cd amiga-app/
           echo '{
@@ -116,7 +116,7 @@ jobs:
             }
           }' > manifest.json
 
-      - name: Run Backend
+      - name: Run backend
         continue-on-error: true
         run: |
           cd amiga-app/backend
@@ -130,7 +130,7 @@ jobs:
             echo "Backend exited with code $exit_code (acceptable)"
           fi
 
-      - name: Run Backend in Debug Mode
+      - name: Run backend in debug mode
         continue-on-error: true
         run: |
           cd amiga-app/backend
