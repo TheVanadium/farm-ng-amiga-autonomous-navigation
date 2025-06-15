@@ -1,0 +1,145 @@
+name: Set Up Amiga App
+on:
+  push:
+    paths:
+      - amiga-app/**
+  pull_request:
+    paths:
+      - amiga-app/**
+
+jobs:
+  build_frontend:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    outputs:
+      artifact-name: frontend-dist
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install Dependencies (cached)
+        uses: actions/cache@v3
+        with:
+          path: |
+            amiga-app/node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('amiga-app/**/package-lock.json') }}
+
+      - name: Build
+        run: |
+          cd amiga-app
+          chmod +x ./build.sh
+          ./build.sh
+
+      - name: Upload dist as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: amiga-app/ts/dist
+
+  setup_frontend:
+    name: Serve & Ping Frontend
+    needs: build_frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download built dist
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: amiga-app/ts/dist
+
+      - name: Install http-server
+        run: npm install --prefix amiga-app http-server
+
+      - name: Serve build and ping
+        run: |
+          cd amiga-app/ts/dist
+          npx http-server -p 8080 > /dev/null 2>&1 &
+          SERVER_PID=$!
+          for i in {1..10}; do
+            curl --fail http://localhost:8080 && break
+            sleep 1
+          done || (echo "Ping failed!" && exit 1)
+          kill $SERVER_PID
+
+  setup_backend:
+    name: Serve Backend
+    needs: build_frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download frontend dist (if you actually need it in backend)
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: amiga-app/ts/dist
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11.x
+
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('amiga-app/backend/requirements.txt') }}
+
+      - name: Install packages
+        run: |
+          cd amiga-app
+          python3 -m venv .venv
+          source .venv/bin/activate
+          pip install --upgrade pip
+          pip install farm_ng_amiga-2.3.4-py3-none-any.whl
+          pip install -r requirements.txt
+
+      - name: Mock manifest
+        run: |
+          cd amiga-app/
+          echo '{
+            "services": {
+              "example-app": {
+                "name": "amiga-app",
+                "type": "app",
+                "args": [
+                  "--config /opt/farmng/config.json", "--port 8042"
+                ],
+                "autostart": true,
+                "http_gui_port": 8042,
+                "display_name": "Monitor App"
+              }
+            }
+          }' > manifest.json
+
+      - name: Run backend
+        continue-on-error: true
+        run: |
+          cd amiga-app/backend
+          source ../.venv/bin/activate
+          python3 main.py
+          exit_code=$?
+          if [ $exit_code -ne 0 ] && [ $exit_code -ne 3 ]; then
+            echo "Backend exited with unexpected code: $exit_code"
+            exit $exit_code
+          else
+            echo "Backend exited with code $exit_code (acceptable)"
+          fi
+
+      - name: Run backend in debug mode
+        continue-on-error: true
+        run: |
+          cd amiga-app/backend
+          source ../.venv/bin/activate
+          python3 main.py --debug
+          exit_code=$?
+          if [ $exit_code -ne 0 ] && [ $exit_code -ne 3 ]; then
+            echo "Backend exited with unexpected code: $exit_code"
+            exit $exit_code
+          else
+            echo "Backend exited with code $exit_code (acceptable)"
+          fi

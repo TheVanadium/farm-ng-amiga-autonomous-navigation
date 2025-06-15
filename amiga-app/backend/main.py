@@ -44,7 +44,7 @@ from contextlib import asynccontextmanager
 
 from multiprocessing import Process, Queue
 
-from . import config
+import config  # type: ignore
 
 from routers import tracks, record, follow, linefollow, pointcloud
 
@@ -173,6 +173,15 @@ async def filter_data(websocket: WebSocket, every_n: int = 3) -> None:
 
 
 if __name__ == "__main__":
+    # get command line arg --debug
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Run the FastAPI server.")
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Run the server in debug mode, serving the React app.",
+    )
 
     # Ensure PORT is defined, either from config or set a default value
     try:
@@ -188,13 +197,15 @@ if __name__ == "__main__":
             self.port = port
             self.debug = debug
 
-    args = Arguments(config="/opt/farmng/config.json", port=PORT, debug=False)
+    args = Arguments(
+        config="/opt/farmng/config.json", port=PORT, debug=parser.parse_args().debug
+    )
 
     # NOTE: we only serve the react app in debug mode
 
-    if not getattr(args, "debug", False):
+    if args.debug:
         react_build_directory = Path(__file__).parent / ".." / "ts" / "dist"
-
+        print(f"Serving React app from {react_build_directory.resolve()}")
         app.mount(
             "/",
             StaticFiles(directory=str(react_build_directory.resolve()), html=True),
