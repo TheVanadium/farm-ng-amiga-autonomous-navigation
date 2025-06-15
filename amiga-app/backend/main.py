@@ -44,7 +44,7 @@ from contextlib import asynccontextmanager
 
 from multiprocessing import Process, Queue
 
-import config # type: ignore
+import config  # type: ignore
 
 from routers import tracks, record, follow, linefollow, pointcloud
 
