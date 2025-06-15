@@ -175,6 +175,7 @@ async def filter_data(websocket: WebSocket, every_n: int = 3) -> None:
 if __name__ == "__main__":
     # get command line arg --debug
     import argparse
+
     parser = argparse.ArgumentParser(description="Run the FastAPI server.")
     parser.add_argument(
         "--debug",
@@ -196,7 +197,9 @@ if __name__ == "__main__":
             self.port = port
             self.debug = debug
 
-    args = Arguments(config="/opt/farmng/config.json", port=PORT, debug= parser.parse_args().debug)
+    args = Arguments(
+        config="/opt/farmng/config.json", port=PORT, debug=parser.parse_args().debug
+    )
 
     # NOTE: we only serve the react app in debug mode
 
