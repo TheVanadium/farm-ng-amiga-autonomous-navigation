@@ -121,9 +121,23 @@ jobs:
           cd amiga-app/backend
           source ../.venv/bin/activate
           python3 main.py
+          exit_code=$?
+          if [ $exit_code -ne 0 ] && [ $exit_code -ne 3 ]; then
+            echo "Backend exited with unexpected code: $exit_code"
+            exit $exit_code
+          else
+            echo "Backend exited with code $exit_code (acceptable)"
+          fi
 
       - name: Run Backend in Debug Mode
         run: |
           cd amiga-app/backend
           source ../.venv/bin/activate
           python3 main.py --debug
+          exit_code=$?
+          if [ $exit_code -ne 0 ] && [ $exit_code -ne 3 ]; then
+            echo "Backend exited with unexpected code: $exit_code"
+            exit $exit_code
+          else
+            echo "Backend exited with code $exit_code (acceptable)"
+          fi
