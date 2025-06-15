@@ -1,5 +1,3 @@
-// src/components/TrackYieldSelect.tsx
-
 import { List, ListItemButton, ListItemText, Box, Typography } from "@mui/material";
 
 interface TrackYieldSelectProps {

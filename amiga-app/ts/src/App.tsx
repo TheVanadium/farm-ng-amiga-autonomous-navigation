@@ -3,7 +3,6 @@ import './App.css'
 import Home from './pages/Home'
 import TrackSelect from './pages/TrackSelect'
 import ViewCropYield from "./pages/ViewCropYield";
-import { useEffect } from "react";
 import { KeyboardProvider } from "./context/KeyboardContext";
 
 function App() {

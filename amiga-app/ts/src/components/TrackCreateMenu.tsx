@@ -1,6 +1,5 @@
-import { LinearProgress, Typography, TextField, Button, Grid2, Box, Modal } from "@mui/material";
-import React, { useState, useRef } from "react";
-import Keyboard from "react-simple-keyboard";
+import { Typography, TextField, Button, Grid2, Box } from "@mui/material";
+import { useState, useRef } from "react";
 import "react-simple-keyboard/build/css/index.css";
 import { useKeyboard } from "../context/KeyboardContext";
 
