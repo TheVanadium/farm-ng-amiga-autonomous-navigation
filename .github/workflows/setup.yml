@@ -8,53 +8,90 @@ on:
       - amiga-app/**
 
 jobs:
-  setup_frontend:
-    name: frontend
+  build_frontend:
+    name: Build Frontend
     runs-on: ubuntu-latest
+    outputs:
+      artifact-name: frontend-dist
     steps:
       - uses: actions/checkout@v3
 
-      - name: Make script executable
-        run: |
-          cd amiga-app/
-          chmod +x ./build.sh
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
 
-      - name: Run build script
+      - name: Install Dependencies (cached)
+        uses: actions/cache@v3
+        with:
+          path: |
+            amiga-app/node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('amiga-app/**/package-lock.json') }}
+
+      - name: Build
         run: |
-          cd amiga-app/
+          cd amiga-app
+          chmod +x ./build.sh
           ./build.sh
 
-      - name: Install http-server
-        run: npm install http-server
+      - name: Upload dist as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-dist
+          path: amiga-app/ts/dist
+
+  setup_frontend:
+    name: Serve & Ping Frontend
+    needs: build_frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download built dist
+        uses: actions/download-artifact@v3
+        with:
+          name: frontend-dist
+          path: amiga-app/ts/dist
+
+      - name: Install http‑server
+        run: npm install --prefix amiga-app http-server
 
       - name: Serve build and ping
         run: |
           cd amiga-app/ts/dist
           npx http-server -p 8080 > /dev/null 2>&1 &
           SERVER_PID=$!
-
           for i in {1..10}; do
             curl --fail http://localhost:8080 && break
             sleep 1
           done || (echo "Ping failed!" && exit 1)
-
           kill $SERVER_PID
 
   setup_backend:
-    name: backend
+    name: Run Backend
+    needs: build_frontend
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install Python
+      - name: Download frontend dist (if you actually need it in backend)
+        uses: actions/download-artifact@v3
+        with:
+          name: frontend-dist
+          path: amiga-app/ts/dist
+
+      - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: 3.11.x
-          architecture: x64
-      
+
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('amiga-app/backend/requirements.txt') }}
+
       - name: Install packages
         run: |
-          cd amiga-app/
+          cd amiga-app
           python3 -m venv .venv
           source .venv/bin/activate
           pip install --upgrade pip
@@ -79,14 +116,14 @@ jobs:
             }
           }' > manifest.json
 
-      - name: Run backend
+      - name: Run Backend
         run: |
-          cd amiga-app/
-          source .venv/bin/activate
-          cd backend/
+          cd amiga-app/backend
+          source ../.venv/bin/activate
           python3 main.py
-          # ensure no exit code 1
-          if [ $? -ne 0 ]; then
-            echo "Backend failed to start!"
-            exit 1
-          fi
+
+      - name: Run Backend in Debug Mode
+        run: |
+          cd amiga-app/backend
+          source ../.venv/bin/activate
+          python3 main.py --debug
