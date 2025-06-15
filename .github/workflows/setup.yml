@@ -30,7 +30,7 @@ jobs:
       - name: Serve build and ping
         run: |
           cd amiga-app/ts/dist
-          http-server -p 8080 > /dev/null 2>&1 &
+          npx http-server -p 8080 > /dev/null 2>&1 &
           SERVER_PID=$!
 
           for i in {1..10}; do
