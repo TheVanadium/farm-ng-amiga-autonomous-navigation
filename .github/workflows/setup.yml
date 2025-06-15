@@ -43,4 +43,33 @@ jobs:
           # Kill server
           kill $SERVER_PID
 
-          
+  setup_backend:
+    name: run backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11.x
+          architecture: x64
+      
+      - name: Install packages
+        run: |
+          cd amiga-app/
+          python3 -m venv .venv
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run backend
+        run: |
+          cd amiga-app/
+          source .venv/bin/activate
+          cd backend/
+          python3 main.py
+          # ensure no exit code 1
+          if [ $? -ne 0 ]; then
+            echo "Backend failed to start!"
+            exit 1
+          fi
