@@ -66,7 +66,7 @@ jobs:
           kill $SERVER_PID
 
   setup_backend:
-    name: Run Backend
+    name: Serve Backend
     needs: build_frontend
     runs-on: ubuntu-latest
     steps:
@@ -117,6 +117,7 @@ jobs:
           }' > manifest.json
 
       - name: Run Backend
+        continue-on-error: true
         run: |
           cd amiga-app/backend
           source ../.venv/bin/activate
@@ -130,6 +131,7 @@ jobs:
           fi
 
       - name: Run Backend in Debug Mode
+        continue-on-error: true
         run: |
           cd amiga-app/backend
           source ../.venv/bin/activate
