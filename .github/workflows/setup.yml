@@ -56,6 +56,7 @@ jobs:
         run: |
           cd amiga-app/
           python3 -m venv .venv
+          source .venv/bin/activate
           pip install --upgrade pip
           pip install farm_ng_amiga-2.3.4-py3-none-any.whl
           pip install -r requirements.txt
