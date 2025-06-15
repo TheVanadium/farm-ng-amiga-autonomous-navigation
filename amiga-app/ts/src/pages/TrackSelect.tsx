@@ -1,10 +1,9 @@
-import { Button, Collapse, Container, Grid2, LinearProgress, Stack, Tab, Tabs, Typography } from "@mui/material";
+import { Button, Container, Grid2, Tab, Tabs, Typography } from "@mui/material";
 import BackButton from "../components/BackButton";
 import CameraFeed from "../components/CameraFeed";
-import React, { SyntheticEvent, useEffect, useState } from "react";
+import { SyntheticEvent, useEffect, useState } from "react";
 import TrackSelectMenu from "../components/TrackSelectMenu";
 import TrackCreateMenu, {TrackType} from "../components/TrackCreateMenu";
-import { JsonView } from "react-json-view-lite";
 import TrackRunMenu from "../components/TrackRunMenu";
 
 export default function TrackSelect() {
