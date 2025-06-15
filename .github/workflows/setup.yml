@@ -1,4 +1,4 @@
-name: Build Amiga App
+name: Set Up Amiga App
 on:
   push:
     paths:
@@ -9,7 +9,7 @@ on:
 
 jobs:
   setup_frontend:
-    name: build frontend
+    name: frontend
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -25,26 +25,23 @@ jobs:
           ./build.sh
 
       - name: Install http-server
-        run: npm install -g http-server
+        run: npm install http-server
 
       - name: Serve build and ping
         run: |
           cd amiga-app/dist
-          # Start the server in background on port 8080
           http-server -p 8080 > /dev/null 2>&1 &
           SERVER_PID=$!
 
-          # Wait for server to start
-          sleep 3
+          for i in {1..10}; do
+            curl --fail http://localhost:8080 && break
+            sleep 1
+          done || (echo "Ping failed!" && exit 1)
 
-          # Ping the server
-          curl --fail http://localhost:8080 || (echo "Ping failed!" && exit 1)
-
-          # Kill server
           kill $SERVER_PID
 
   setup_backend:
-    name: run backend
+    name: backend
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
