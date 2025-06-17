@@ -28,37 +28,39 @@ from farm_ng.core.event_client_manager import EventClient
 from fastapi import WebSocket, WebSocketDisconnect
 from farm_ng.core.event_service_pb2 import SubscribeRequest
 from farm_ng.core.uri_pb2 import Uri
-from google.protobuf.json_format import MessageToJson
+from google.protobuf.json_format import MessageToJson  # type: ignore
 
 
 import uvicorn
 from farm_ng.core.event_client_manager import EventClientSubscriptionManager
 from farm_ng.core.event_service_pb2 import EventServiceConfigList
 from farm_ng.core.events_file_reader import proto_from_json_file
-from farm_ng_core_pybind import Pose3F64
 
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
-from pydantic import BaseModel
 
 from multiprocessing import Process, Queue
 
-from config import *
+import config  # type: ignore
 
 from routers import tracks, record, follow, linefollow, pointcloud
 
 from cameraBackend.oakManager import startCameras
 
+from typing import AsyncGenerator, Any, Optional
+from typing import Optional
+
 global oak_manager
+oak_manager: Optional[Process] = None
 global camera_msg_queue
-camera_msg_queue = Queue()
+camera_msg_queue: Queue = Queue()
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncGenerator[dict, None]:
     print("Initializing App...")
 
     # config with all the configs
@@ -80,7 +82,7 @@ async def lifespan(app: FastAPI):
         oak_manager = None
     else:
         oak_manager = Process(
-            target=startCameras, args=(camera_msg_queue, POINTCLOUD_DATA_DIR)
+            target=startCameras, args=(camera_msg_queue, config.POINTCLOUD_DATA_DIR)
         )
         oak_manager.start()
         print(f"Starting oak manager with PID {oak_manager.pid}")
@@ -93,7 +95,7 @@ async def lifespan(app: FastAPI):
         "camera_msg_queue": camera_msg_queue,
         # Yield dict cannot be changed directly, but objects inside it can
         # So we use a vars item for all our non constant variables
-        "vars": StateVars(),
+        "vars": config.StateVars(),
     }
 
     # Shutdown cameras properly
@@ -120,8 +122,11 @@ app.include_router(linefollow.router)
 app.include_router(pointcloud.router)
 
 
-def handle_sigterm(signum, frame):
+# not sure why params are necessary but won't touch it in case the robot complains
+# could use testing
+def handle_sigterm(signum: Any, frame: Any) -> None:
     print("Received SIGTERM, stopping camera services")
+
     if oak_manager != None:
         oak_manager.terminate()
         oak_manager.join()
@@ -132,7 +137,7 @@ signal.signal(signal.SIGTERM, handle_sigterm)
 
 
 @app.websocket("/filter_data")
-async def filter_data(websocket: WebSocket, every_n: int = 3):
+async def filter_data(websocket: WebSocket, every_n: int = 3) -> None:
     """Coroutine to subscribe to filter state service via websocket.
 
     Args:
@@ -168,17 +173,39 @@ async def filter_data(websocket: WebSocket, every_n: int = 3):
 
 
 if __name__ == "__main__":
+    # get command line arg --debug
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Run the FastAPI server.")
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Run the server in debug mode, serving the React app.",
+    )
+
+    # Ensure PORT is defined, either from config or set a default value
+    try:
+        PORT = config.PORT
+    except AttributeError:
+        raise AttributeError(
+            "PORT is not defined in the config module. Please set it before running the server."
+        )
 
     class Arguments:
-        def __init__(self, **kwargs):
-            self.__dict__.update(kwargs)
+        def __init__(self, config: str, port: int, debug: bool = False) -> None:
+            self.config = config
+            self.port = port
+            self.debug = debug
 
-    args = Arguments(config="/opt/farmng/config.json", port=PORT, debug=False)
+    args = Arguments(
+        config="/opt/farmng/config.json", port=PORT, debug=parser.parse_args().debug
+    )
 
     # NOTE: we only serve the react app in debug mode
-    if not args.debug:
-        react_build_directory = Path(__file__).parent / ".." / "ts" / "dist"
 
+    if args.debug:
+        react_build_directory = Path(__file__).parent / ".." / "ts" / "dist"
+        print(f"Serving React app from {react_build_directory.resolve()}")
         app.mount(
             "/",
             StaticFiles(directory=str(react_build_directory.resolve()), html=True),

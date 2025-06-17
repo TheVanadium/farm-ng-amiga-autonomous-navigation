@@ -3,7 +3,7 @@ import multiprocessing
 from cameraBackend.oakManager import startCameras
 
 
-def main():
+def main() -> None:
     while True:
         user_input = input("a or s: ").lower()
 
@@ -14,7 +14,7 @@ def main():
 
 
 multiprocessing.set_start_method("fork")
-queue = Queue()
+queue: Queue = Queue()
 oakManager = Process(target=startCameras, args=(queue,))
 oakManager.start()
 print(f"camera PID: {oakManager.pid}")

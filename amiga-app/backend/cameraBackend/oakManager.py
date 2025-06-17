@@ -16,15 +16,15 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 # Last digit of ip identifies the camera
 # 0 = Oak0, etc
 cameras: List[Camera] = []
-cameraIps = ["10.95.76.11", "10.95.76.12", "10.95.76.13"]
+cameraIps: list[str] = ["10.95.76.11", "10.95.76.12", "10.95.76.13"]
 # STREAM_PORT_BASE + last 2 digits of ip identifies the port for streaming
-STREAM_PORT_BASE = "50"
+STREAM_PORT_BASE: str = "50"
 
-PIPELINE_FPS = 30
-VIDEO_FPS = 20
+PIPELINE_FPS: int = 30
+VIDEO_FPS: int = 20
 
 
-def startCameras(queue: Queue, POINTCLOUD_DATA_DIR: str):
+def startCameras(queue: Queue, POINTCLOUD_DATA_DIR: str) -> None:
     """
     Initialize DepthAI cameras, set up point‐cloud fusion, and listen for control
     commands using a multiprocessing queue.
@@ -48,10 +48,13 @@ def startCameras(queue: Queue, POINTCLOUD_DATA_DIR: str):
               - "save_point_cloud"
         POINTCLOUD_DATA_DIR (str):
             The directory to store point clouds to.
+
+    Returns:
+        None
     """
 
     # Register handler here so the while loop can be interrupted
-    def handle_sigterm(signum, frame):
+    def handle_sigterm(signum, frame) -> None:
         print("Received SIGTERM, stopping oak manager")
         for camera in cameras:
             camera.shutdown()

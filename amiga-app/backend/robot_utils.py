@@ -1,14 +1,7 @@
-from farm_ng.core.event_client_manager import EventClient
-from farm_ng.core.events_file_writer import proto_to_json_file
-from farm_ng.core.event_service_pb2 import EventServiceConfig
-from farm_ng.track.track_pb2 import Track, TrackFollowRequest, TrackFollowerState
-from farm_ng.filter.filter_pb2 import FilterState
+from farm_ng.track.track_pb2 import Track
 from farm_ng_core_pybind import Isometry3F64
 from farm_ng_core_pybind import Pose3F64
 from farm_ng_core_pybind import Rotation3F64
-from farm_ng.core.event_service_pb2 import SubscribeRequest
-from farm_ng.core.uri_pb2 import Uri
-from farm_ng.core.events_file_reader import proto_from_json_file
 
 import numpy as np
 
@@ -23,7 +16,7 @@ def format_track(track_waypoints: list[Pose3F64]) -> Track:
 
 
 def walk_towards(
-    current_pose: Pose3F64, target_position: np.array, goal_counter: int
+    current_pose: Pose3F64, target_position: np.ndarray, goal_counter: int
 ) -> tuple[list[Pose3F64], int]:
     """_summary_
     Given the robot's current pose, outputs the list of poses the robot must use in their track to walk towards the target position
@@ -59,7 +52,9 @@ def walk_towards(
         current_pose = turn[-1]
     cutoff = len(turn)
     turn.extend(
-        create_straight_segment(current_pose, distance, f"goal{goal_counter + 1}")
+        create_straight_segment(
+            current_pose, float(distance), f"goal{goal_counter + 1}"
+        )
     )
     print(f"Walking forward {distance} meters")
     return turn, cutoff

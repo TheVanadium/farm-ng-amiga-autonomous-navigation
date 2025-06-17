@@ -1,4 +1,3 @@
-// src/components/TrackYieldInfo.tsx
 import { Box, Typography } from "@mui/material";
 
 interface TrackYieldInfoProps {

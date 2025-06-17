@@ -1,6 +1,6 @@
-import { LinearProgress, Typography, TextField, Button, Grid2, Box, Stack, Paper } from "@mui/material";
+import { Typography, TextField, Button, Grid2, Box, Stack, Paper } from "@mui/material";
 import { styled } from '@mui/material/styles';
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Vec2, FromPolar, twoDigits } from "../utils/Vec2";
 import arrow from "../icons/direction-arrow.png"
 import { TrackType } from "./TrackCreateMenu";

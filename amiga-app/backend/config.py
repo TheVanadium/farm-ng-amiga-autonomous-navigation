@@ -2,20 +2,19 @@
 import json
 
 from pydantic import BaseModel
-from farm_ng_core_pybind import Isometry3F64
 from farm_ng_core_pybind import Pose3F64
-from farm_ng_core_pybind import Rotation3F64
 import numpy as np
+from typing import Optional
 
 
 class StateVars(BaseModel):
     track_recording: bool = False
     # Name of the line being recorded, so it can be accessed
-    line_recording: str = None
+    line_recording: Optional[str] = None
     # 2 dimensional vectors
-    line_start: np.ndarray = None
-    line_end: np.ndarray = None
-    turn_calibrating: bool = False
+    line_start: Optional[np.ndarray] = None
+    line_end: Optional[np.ndarray] = None
+    turn_calibrating: Optional[bool] = False
     turn_calibration_start: Pose3F64 = None
     turn_calibration_segments: int = 0
     turn_length: float = 0

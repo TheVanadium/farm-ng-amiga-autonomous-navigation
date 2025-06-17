@@ -3,10 +3,10 @@ name: Lint black
 on:
   push:
     paths:
-      - '*.py'
+      - '**/*.py'
   pull_request:
     paths:
-      - '*.py'
+      - '**/*.py'
 
 jobs:
   lint:
