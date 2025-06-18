@@ -59,45 +59,56 @@ oak_manager: Optional[Process] = None
 global camera_msg_queue
 camera_msg_queue: Queue = Queue()
 
+DEV_MODE: bool = True
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[dict, None]:
     print("Initializing App...")
 
-    # config with all the configs
-    base_config_list: EventServiceConfigList = proto_from_json_file(
-        args.config, EventServiceConfigList()
-    )
-
-    # filter out services to pass to the events client manager
-    service_config_list = EventServiceConfigList()
-    for config in base_config_list.configs:
-        if config.port == 0:
-            continue
-        service_config_list.configs.append(config)
-
-    event_manager = EventClientSubscriptionManager(config_list=service_config_list)
-
-    no_cameras = False
-    if no_cameras:
+    if DEV_MODE:
+        yield {
+            "event_manager": None,
+            "oak_manager": None,
+            "camera_msg_queue": None,
+            "vars": None,
+        }
         oak_manager = None
+
     else:
-        oak_manager = Process(
-            target=startCameras, args=(camera_msg_queue, config.POINTCLOUD_DATA_DIR)
+        # config with all the configs
+        base_config_list: EventServiceConfigList = proto_from_json_file(
+            args.config, EventServiceConfigList()
         )
-        oak_manager.start()
-        print(f"Starting oak manager with PID {oak_manager.pid}")
 
-    asyncio.create_task(event_manager.update_subscriptions())
+        # filter out services to pass to the events client manager
+        service_config_list = EventServiceConfigList()
+        for config in base_config_list.configs:
+            if config.port == 0:
+                continue
+            service_config_list.configs.append(config)
 
-    yield {
-        "event_manager": event_manager,
-        "oak_manager": oak_manager,
-        "camera_msg_queue": camera_msg_queue,
-        # Yield dict cannot be changed directly, but objects inside it can
-        # So we use a vars item for all our non constant variables
-        "vars": config.StateVars(),
-    }
+        event_manager = EventClientSubscriptionManager(config_list=service_config_list)
+
+        no_cameras = False
+        if no_cameras:
+            oak_manager = None
+        else:
+            oak_manager = Process(
+                target=startCameras, args=(camera_msg_queue, config.POINTCLOUD_DATA_DIR)
+            )
+            oak_manager.start()
+            print(f"Starting oak manager with PID {oak_manager.pid}")
+
+        asyncio.create_task(event_manager.update_subscriptions())
+
+        yield {
+            "event_manager": event_manager,
+            "oak_manager": oak_manager,
+            "camera_msg_queue": camera_msg_queue,
+            # Yield dict cannot be changed directly, but objects inside it can
+            # So we use a vars item for all our non constant variables
+            "vars": config.StateVars(),
+        }
 
     # Shutdown cameras properly
     if oak_manager != None:
