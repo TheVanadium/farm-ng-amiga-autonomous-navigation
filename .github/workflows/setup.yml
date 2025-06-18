@@ -123,7 +123,7 @@ jobs:
           source ../.venv/bin/activate
           python3 main.py
           exit_code=$?
-          if [ $exit_code -ne 0 ] && [ $exit_code -ne 3 ]; then
+          if [ $exit_code -ne 3 ]; then
             echo "Backend exited with unexpected code: $exit_code"
             exit $exit_code
           else
@@ -137,9 +137,25 @@ jobs:
           source ../.venv/bin/activate
           python3 main.py --debug
           exit_code=$?
-          if [ $exit_code -ne 0 ] && [ $exit_code -ne 3 ]; then
+          if [ $exit_code -ne 3 ]; then
             echo "Backend exited with unexpected code: $exit_code"
             exit $exit_code
           else
             echo "Backend exited with code $exit_code (acceptable)"
           fi
+
+      - name: Run backend-desktop
+        run: |
+          cd amiga-app/backend
+          source ../.venv/bin/activate
+          python3 main.py --desktop
+          sleep 15
+          curl --fail http://localhost:8042 || (echo "Backend desktop ping failed!" && exit 1)
+      - name: Run backend-desktop in debug mode
+        run: |
+          cd amiga-app/backend
+          source ../.venv/bin/activate
+          python3 main.py --desktop --debug
+          sleep 15
+          curl --fail http://localhost:8042 || (echo "Backend desktop debug ping failed!" && exit 1)
+          
