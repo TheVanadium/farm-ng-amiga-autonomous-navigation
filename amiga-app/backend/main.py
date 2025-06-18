@@ -59,14 +59,11 @@ oak_manager: Optional[Process] = None
 global camera_msg_queue
 camera_msg_queue: Queue = Queue()
 
-DEV_MODE: bool = True
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[dict, None]:
     print("Initializing App...")
 
-    if DEV_MODE:
+    if app.state.desktop:
         yield {
             "event_manager": None,
             "oak_manager": None,
@@ -195,6 +192,11 @@ if __name__ == "__main__":
         action="store_true",
         help="Run the server in debug mode, serving the React app.",
     )
+    parser.add_argument(
+        "--desktop",
+        action="store_true",
+        help="Run the server in on desktop mode, without robot functionality.",
+    )
 
     # Ensure PORT is defined, either from config or set a default value
     try:
@@ -205,13 +207,19 @@ if __name__ == "__main__":
         )
 
     class Arguments:
-        def __init__(self, config: str, port: int, debug: bool = False) -> None:
+        def __init__(
+            self, config: str, port: int, debug: bool = False, desktop: bool = False
+        ) -> None:
             self.config = config
             self.port = port
             self.debug = debug
+            self.desktop = desktop
 
     args = Arguments(
-        config="/opt/farmng/config.json", port=PORT, debug=parser.parse_args().debug
+        config="/opt/farmng/config.json",
+        port=PORT,
+        debug=parser.parse_args().debug,
+        desktop=parser.parse_args().desktop,
     )
 
     # NOTE: we only serve the react app in debug mode
@@ -223,6 +231,8 @@ if __name__ == "__main__":
             "/",
             StaticFiles(directory=str(react_build_directory.resolve()), html=True),
         )
+
+    app.state.desktop = args.desktop
 
     # print(f"camera PID: {oakManager.pid}")
 
