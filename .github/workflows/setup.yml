@@ -69,6 +69,11 @@ jobs:
     name: Serve Backend
     needs: build_frontend
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        mode: ["", "--debug"]
+
     steps:
       - uses: actions/checkout@v3
 
@@ -116,30 +121,51 @@ jobs:
             }
           }' > manifest.json
 
-      - name: Run backend
+      - name: "Run backend robot mode"
         continue-on-error: true
         run: |
           cd amiga-app/backend
           source ../.venv/bin/activate
-          python3 main.py
-          exit_code=$?
-          if [ $exit_code -ne 0 ] && [ $exit_code -ne 3 ]; then
-            echo "Backend exited with unexpected code: $exit_code"
-            exit $exit_code
+          echo "Running with flags: ${{ matrix.mode }}"
+          python3 main.py ${{ matrix.mode }} &
+          PID=$!
+
+          # Wait up to 30 seconds for the process to exit
+          for i in {1..30}; do
+            if ! kill -0 $PID 2>/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+
+          if kill -0 $PID 2>/dev/null; then
+            echo "Process did not exit after 30 seconds, killing..."
+            kill $PID
+            wait $PID
+            exit 1
           else
-            echo "Backend exited with code $exit_code (acceptable)"
+            wait $PID
+            exit_code=$?
+            if [ $exit_code -ne 3 ]; then
+              echo "Expected exit code 3, got $exit_code"
+              exit $exit_code
+            else
+              echo "Got expected exit code 3"
+            fi
           fi
 
-      - name: Run backend in debug mode
-        continue-on-error: true
+      - name: "Run backend desktop mode"
         run: |
           cd amiga-app/backend
           source ../.venv/bin/activate
-          python3 main.py --debug
-          exit_code=$?
-          if [ $exit_code -ne 0 ] && [ $exit_code -ne 3 ]; then
-            echo "Backend exited with unexpected code: $exit_code"
-            exit $exit_code
+          echo "Running with flags: ${{ matrix.mode }}"
+          python3 main.py ${{ matrix.mode }} --desktop &
+          
+          sleep 15
+          if ! curl --fail http://localhost:8042/openapi.json; then
+            echo "Ping failed!"
+            exit 1
           else
-            echo "Backend exited with code $exit_code (acceptable)"
+            echo "Ping successful!"
           fi
+            
