@@ -59,6 +59,7 @@ oak_manager: Optional[Process] = None
 global camera_msg_queue
 camera_msg_queue: Queue = Queue()
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[dict, None]:
     print("Initializing App...")
