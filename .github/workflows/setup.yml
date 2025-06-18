@@ -161,9 +161,8 @@ jobs:
           echo "Running with flags: ${{ matrix.mode }}"
           python3 main.py ${{ matrix.mode }} --desktop &
           
-          # wait 15 seconds then ping
           sleep 15
-          if ! curl --fail http://localhost:8042; then
+          if ! curl --fail http://localhost:8042/openapi.json; then
             echo "Ping failed!"
             exit 1
           else
