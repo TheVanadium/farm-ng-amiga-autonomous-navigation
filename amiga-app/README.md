@@ -2,18 +2,18 @@
 Developing/building only works on a Linux machine. 
 
 First, clone the repository:
-```
+```bash
 git clone https://github.com/TheVanadium/farm-ng-amiga-autonomous-navigation.git
 ```
 
 ## App
 The app lives in the directory `amiga-app`
-```
+```bash
 cd amiga-app
 ```
 
 #### Frontend
-```
+```bash
 cd ts
 npm install
 npm run dev
@@ -21,8 +21,8 @@ npm run dev
 The `.env` file must have the VITE_API_URL constant configured to the backend port. Note that the Amiga screen's is 1280x800.
 
 #### Backend
-The backend only works on an Amiga device, requiring SSH access. To obtain it, follow the instructions at https://amiga.farm-ng.com/docs/ssh/.
-```
+The complete backend only works on an Amiga device, requiring SSH access. To obtain it, follow the instructions at https://amiga.farm-ng.com/docs/ssh/. However, a limited version of the backend can be run on Linux machines using the `--desktop` flag.
+```bash
 python3 -m venv venv
 source venv/Scripts/activate
 
@@ -31,6 +31,9 @@ pip install -r requirements.txt
 
 cd backend
 python3 main.py
+
+# if you're on a linux desktop
+python3 main.py --desktop 
 ```
 
 ### Building the App on the Amiga
