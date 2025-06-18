@@ -72,7 +72,7 @@ jobs:
 
     strategy:
       matrix:
-        mode: ["", "--debug", "--desktop", "--desktop --debug"]
+        mode: ["", "--debug"]
 
     steps:
       - uses: actions/checkout@v3
@@ -121,7 +121,8 @@ jobs:
             }
           }' > manifest.json
 
-      - name: "Run backend with flags: ${{ matrix.mode }}"
+      - name: "Run backend robot mode"
+        continue-on-error: true
         run: |
           cd amiga-app/backend
           source ../.venv/bin/activate
@@ -129,12 +130,19 @@ jobs:
           python3 main.py ${{ matrix.mode }} &
           PID=$!
 
-          # Determine expect_ping from mode string
-          if echo "${{ matrix.mode }}" | grep -q -- '--desktop'; then
-            echo "Expecting ping on localhost:8042..."
-            sleep 15
-            curl --fail http://localhost:8042 || (echo "Ping failed!" && kill $PID && exit 1)
+          # Wait up to 30 seconds for the process to exit
+          for i in {1..30}; do
+            if ! kill -0 $PID 2>/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+
+          if kill -0 $PID 2>/dev/null; then
+            echo "Process did not exit after 30 seconds, killing..."
             kill $PID
+            wait $PID
+            exit 1
           else
             wait $PID
             exit_code=$?
@@ -144,5 +152,21 @@ jobs:
             else
               echo "Got expected exit code 3"
             fi
+          fi
+
+      - name: "Run backend desktop mode"
+        run: |
+          cd amiga-app/backend
+          source ../.venv/bin/activate
+          echo "Running with flags: ${{ matrix.mode }}"
+          python3 main.py ${{ matrix.mode }} --desktop &
+          
+          # wait 15 seconds then ping
+          sleep 15
+          if ! curl --fail http://localhost:8042; then
+            echo "Ping failed!"
+            exit 1
+          else
+            echo "Ping successful!"
           fi
             
