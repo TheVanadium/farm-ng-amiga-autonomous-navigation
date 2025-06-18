@@ -61,6 +61,7 @@ camera_msg_queue: Queue = Queue()
 
 DEV_MODE: bool = True
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[dict, None]:
     print("Initializing App...")
