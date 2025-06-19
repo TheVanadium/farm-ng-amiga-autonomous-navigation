@@ -25,8 +25,8 @@ export default function TrackRunMenu(props: TrackRunProps) {
     const [followingTrack, setFollowingTrack] = useState(false);
     const [trackLoaded, setTrackLoaded] = useState(false);
 
-    const [numRowsInput, setNumRowsInput] = useState("");
-    const numRowsInputValid = !isNaN(parseInt(numRowsInput)) && /^[1-9]\d*$/.test(numRowsInput);
+    const [numRowsInput, setNumRowsInput] = useState("1");
+    const numRowsInputValid = /^[1-9]\d*$/.test(numRowsInput);
 
     const [firstTurnRight, setFirstTurnRight] = useState(false);
 
@@ -63,8 +63,6 @@ export default function TrackRunMenu(props: TrackRunProps) {
         };
         return () => {detailSocket.close()};
     }, []);
-
-    
 
     function fetchStartingPoint() {
         let trackDataEndpoint;
@@ -110,6 +108,11 @@ export default function TrackRunMenu(props: TrackRunProps) {
         const stateEndpoint = `${import.meta.env.VITE_API_URL}/follow/state`;
 
         function makeFollowTrackRequest() {
+            if (!numRowsInputValid) {
+                console.log("Invalid number of rows input");
+                return;
+            };
+
             let followTrackEndpoint;
             let requestData;
             if (props.selectedType === TrackType.standard) {
@@ -210,8 +213,8 @@ export default function TrackRunMenu(props: TrackRunProps) {
             )}
             placeholder="Number of rows"
             disabled={trackLoaded}
-            error={!numRowsInputValid || parseInt(numRowsInput) <= 0}
-            helperText={!numRowsInputValid || parseInt(numRowsInput) <= 0 ? "Number of rows must be a positive integer" : ""}
+            error={!numRowsInputValid}
+            helperText={!numRowsInputValid ? "Number of rows must be a positive integer" : ""}
             style={{ width: "250px"}}
             />
         </Grid2>
