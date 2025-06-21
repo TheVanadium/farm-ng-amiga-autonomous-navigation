@@ -1,6 +1,6 @@
 import { Typography, TextField, Button, Grid2, Box, Stack, Paper } from "@mui/material";
 import { styled } from '@mui/material/styles';
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Vec2, FromPolar, twoDigits } from "../utils/Vec2";
 import arrow from "../icons/direction-arrow.png"
 import { TrackType } from "./TrackCreateMenu";
@@ -25,9 +25,10 @@ export default function TrackRunMenu(props: TrackRunProps) {
     const [followingTrack, setFollowingTrack] = useState(false);
     const [trackLoaded, setTrackLoaded] = useState(false);
 
-    const [numRows, setNumRows] = useState("1");
+    const [numRowsInput, setNumRowsInput] = useState("1");
+    const numRowsInputValid = /^[1-9]\d*$/.test(numRowsInput);
+
     const [firstTurnRight, setFirstTurnRight] = useState(false);
-    const inputRef = useRef<HTMLInputElement>(null);
 
     // Keyboard
     const { openKeyboard } = useKeyboard();
@@ -62,8 +63,6 @@ export default function TrackRunMenu(props: TrackRunProps) {
         };
         return () => {detailSocket.close()};
     }, []);
-
-    
 
     function fetchStartingPoint() {
         let trackDataEndpoint;
@@ -109,12 +108,13 @@ export default function TrackRunMenu(props: TrackRunProps) {
         const stateEndpoint = `${import.meta.env.VITE_API_URL}/follow/state`;
 
         function makeFollowTrackRequest() {
+            if (!numRowsInputValid) {
+                console.log("Invalid number of rows input");
+                return;
+            };
+
             let followTrackEndpoint;
             let requestData;
-            let numRowsInt = toPosInt(numRows);
-            if (numRowsInt === false) {
-                return;
-            }
             if (props.selectedType === TrackType.standard) {
                 followTrackEndpoint = `${import.meta.env.VITE_API_URL}/follow/start/${props.selectedTrack}`;
                 requestData = {method: "POST"};
@@ -126,7 +126,7 @@ export default function TrackRunMenu(props: TrackRunProps) {
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                        "num_rows": numRowsInt,
+                        "num_rows": parseInt(numRowsInput),
                         "first_turn_right": firstTurnRight
                     })
                 };
@@ -199,25 +199,6 @@ export default function TrackRunMenu(props: TrackRunProps) {
         });
     }
 
-    function rowsError() {
-        let err = toPosInt(numRows) === false;
-        return err;
-    }
-
-    function toPosInt(str: string) {  
-        let val = +str;
-        if (Number.isNaN(val)) {
-            return false;
-        }
-        if ((val % 1) != 0) {
-            return false;
-        }
-        if (val < 1) {
-            return false;
-        }
-        return val;
-    }
-
     function lineOptions() {
         if (props.selectedType != TrackType.line) {
             return;
@@ -225,19 +206,16 @@ export default function TrackRunMenu(props: TrackRunProps) {
         return (<>
         <Grid2 size={6}>
             <TextField
-                inputRef={inputRef}
-                value={numRows}
-                onChange={(event) => setNumRows(event.target.value)}
-                onFocus={() => openKeyboard(
-                    (input) => setNumRows(input),
-                    String(numRows),
-                    inputRef
-                )}
-                placeholder="Number of rows"
-                disabled={trackLoaded}
-                error={rowsError()}
-                helperText={rowsError() ? "Number of rows must be a positive integer" : ""}
-                style={{ width: "250px"}}
+            value={numRowsInput}
+            onFocus={() => openKeyboard(
+                (input) => setNumRowsInput(input),
+                numRowsInput,
+            )}
+            placeholder="Number of rows"
+            disabled={trackLoaded}
+            error={!numRowsInputValid}
+            helperText={!numRowsInputValid ? "Number of rows must be a positive integer" : ""}
+            style={{ width: "250px"}}
             />
         </Grid2>
         <Grid2 size={6}>
