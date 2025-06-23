@@ -6,6 +6,6 @@ depthai
 opencv-python
 open3d==0.18.0
 
-numpy
+numpy<2.0.0
 
 mypy
