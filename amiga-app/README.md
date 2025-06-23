@@ -20,7 +20,11 @@ npm run dev
 The `.env` file must have the VITE_API_URL constant configured to the backend port. Note that the Amiga screen's is 1280x800.
 
 #### Backend
-The complete backend only works on an Amiga device, requiring SSH access. To obtain it, follow the instructions at https://amiga.farm-ng.com/docs/ssh/. However, a limited version of the backend can be run on Linux machines using the `--desktop` flag.
+To run the backend, you must first create a manifest file (https://amiga.farm-ng.com/docs/brain/brain-apps-manifest/).
+
+The complete backend only works on an Amiga device, requiring SSH access. To obtain it, follow the instructions at https://amiga.farm-ng.com/docs/ssh/. 
+
+A limited version of the backend can be run on Linux machines using the `--desktop` flag.
 ```bash
 python3 -m venv venv
 source venv/Scripts/activate
@@ -36,7 +40,6 @@ python3 main.py --desktop
 ```
 
 ### Building the App on the Amiga
-1. Create a manifest file (https://amiga.farm-ng.com/docs/brain/brain-apps-manifest/)
 2. Configure the `.env` file to the manifest file's `app_route` value
 3. Build the application: `./build.sh`
 4. Install on Amiga: `./install.sh`
