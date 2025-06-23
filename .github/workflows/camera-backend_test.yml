@@ -1,0 +1,29 @@
+name: Test cameraBackend
+on:
+  push:
+    paths:
+      - 'amiga-app/backend/cameraBackend/**'
+  pull_request:
+    paths:
+      - 'amiga-app/backend/cameraBackend/**'
+
+jobs:
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install packages
+        run: |
+          cd amiga-app
+          python3 -m venv .venv
+          source .venv/bin/activate
+          pip install --upgrade pip
+          pip install farm_ng_amiga-2.3.4-py3-none-any.whl
+          pip install -r requirements.txt
+      
+      - name: Pytest
+        run: |
+          cd amiga-app
+          source .venv/bin/activate
+          cd backend
+          PYTHONPATH="." pytest
