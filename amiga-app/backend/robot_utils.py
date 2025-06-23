@@ -32,12 +32,12 @@ def walk_towards(
     rotation_matrix = current_pose.rotation.rotation_matrix
     cos_theta = rotation_matrix[0][0]
     sin_theta = rotation_matrix[1][0]
-    current_angle = np.acos(cos_theta)
+    current_angle = np.arccos(cos_theta)
     if sin_theta < 0:
         current_angle = -current_angle
     diff = target_position - current_position
     distance = np.linalg.norm(diff)
-    target_angle = np.acos(diff[0] / distance)
+    target_angle = np.arccos(diff[0] / distance)
     if diff[1] < 0:
         target_angle = -target_angle
 
