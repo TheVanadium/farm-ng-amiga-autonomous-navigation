@@ -5,7 +5,10 @@ uvicorn[standard]
 depthai
 opencv-python
 open3d==0.18.0
+DracoPy
 
 numpy<2.0.0
 
 mypy
+
+pytest
