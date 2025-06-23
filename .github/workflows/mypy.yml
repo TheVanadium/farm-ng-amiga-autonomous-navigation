@@ -3,9 +3,11 @@ name: Lint mypy
 on:
   push:
     paths:
+      - '**/requirements.txt'
       - '**/*.py'
   pull_request:
     paths:
+      - '**/requirements.txt'
       - '**/*.py'
 
 jobs:
