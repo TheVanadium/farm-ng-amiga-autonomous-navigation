@@ -337,7 +337,7 @@ class Camera:
         # R = rotation matrix , t = translation vector
         R, t = self.transform_matrix[:3, :3], self.transform_matrix[:3, 3]
         t *= 1000 # Convert from meters to mm
-        transformed_points = raw_points @ R.T - t.reshape((1, 3))
+        transformed_points = raw_points @ R.T + t.reshape((1, 3))
 
         self.point_cloud.points = o3d.utility.Vector3dVector(transformed_points)
         self.point_cloud.colors = o3d.utility.Vector3dVector(colors)
