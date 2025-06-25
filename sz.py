@@ -21,13 +21,14 @@ def gen_stats(base_path="."):
       if any(s in path.replace('\\', '/') for s in ['amiga-app/venv', 'amiga-app/ts/node_modules']): continue
       filepath = os.path.join(path, name)
       relfilepath = os.path.relpath(filepath, base_path).replace('\\', '/')
-      if not name.endswith(".py"):
-        with open(filepath) as file_: lines = [line.strip() for line in file_.readlines()]
-        token_count, line_count = sum(len(line.split()) for line in lines if is_js_token(line)), sum(1 for line in lines if is_js_token(line))
-      else:
+      if name.endswith(".py"):
         with tokenize.open(filepath) as file_:
           tokens = [t for t in tokenize.generate_tokens(file_.readline) if t.type in TOKEN_WHITELIST and not is_docstring(t)]
           token_count, line_count = len(tokens), len(set([x for t in tokens for x in range(t.start[0], t.end[0]+1)]))
+      else:
+        with open(filepath) as file_: lines = [line.strip() for line in file_.readlines()]
+        token_count, line_count = sum(len(line.split()) for line in lines if is_js_token(line)), sum(1 for line in lines if is_js_token(line))
+        
       if line_count > 0: table.append([relfilepath, line_count, token_count/line_count])
   return table
 
