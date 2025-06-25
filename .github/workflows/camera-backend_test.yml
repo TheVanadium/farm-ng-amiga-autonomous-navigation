@@ -19,6 +19,9 @@ jobs:
           python-version: 3.11.x
           architecture: x64
           lfs: 'true'
+      - name: checkoutLFS
+        uses: actions/checkout@v2
+        run: git lfs pull
       - name: Checkout
         uses: actions/checkout@v3
       - name: Install packages
