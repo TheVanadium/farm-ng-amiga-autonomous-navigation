@@ -18,7 +18,7 @@ def gen_stats(base_path="."):
     exts = ['.py', '.js',  '.ts', '.tsx', '.jsx', '.css']
     for name in files:
       if not any(name.endswith(ext) for ext in exts): continue
-      if any(s in path.replace('\\', '/') for s in ['amiga-app/venv', 'amiga-app/ts/node_modules']): continue
+      if any(s in path.replace('\\', '/') for s in ['amiga-app/venv', 'amiga-app/ts/node_modules', 'amiga-app/ts/dist']): continue
       filepath = os.path.join(path, name)
       relfilepath = os.path.relpath(filepath, base_path).replace('\\', '/')
       if name.endswith(".py"):
