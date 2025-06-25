@@ -3,10 +3,11 @@ on:
   push:
     paths:
       - 'amiga-app/backend/cameraBackend/**'
+      - 'amiga-app/backend/tests**'
   pull_request:
     paths:
       - 'amiga-app/backend/cameraBackend/**'
-
+      - 'amiga-app/backend/tests**'
 jobs:
   test:
     name: Tests
