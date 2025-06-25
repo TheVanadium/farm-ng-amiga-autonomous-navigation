@@ -9,5 +9,6 @@ pip install -r requirements.txt
 
 # build the frontend
 cd ts/
+nvm install 18
 npm install
 npm run build
