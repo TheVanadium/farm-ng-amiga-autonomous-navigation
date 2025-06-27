@@ -1,8 +1,7 @@
 from cameraBackend.pointCloudCompression import decompress_drc # PYTHONPATH="amiga-app/backend"
-from sklearn.linear_model import LinearRegression
+from scipy.stats import pearsonr
 import numpy as np
 import open3d as o3d
-from open3d.visualization import draw
 
 # can't combine because cameras aren't aligned or something
 # def combine_pcds(pcds: list[o3d.geometry.PointCloud]) -> o3d.geometry.PointCloud:
@@ -38,10 +37,9 @@ print(voxel_counts)
 # get weights
 with open("data/weights.txt", "r") as f:
     weights = np.array([int(line.strip()) for line in f.readlines()])
+print(weights)
 
 # fit linear regression
-model = LinearRegression()
-model.fit(voxel_counts, weights)
-print("Coefficients:", model.coef_)
-print("Intercept:", model.intercept_)
-print("R^2 score:", model.score(voxel_counts, weights))
+for i in range(voxel_counts.shape[1]):
+    r, p = pearsonr(voxel_counts[:, i], weights)
+    print(f"Camera {i+1}: r = {r:.4f}, p = {p:.4f}")
