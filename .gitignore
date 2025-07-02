@@ -11,3 +11,6 @@ data_analysis/pointclouds/
 amiga-app/pointclouds/
 
 venv/
+
+amiga-app/lines/*
+!amiga-app/lines/.gitkeep
