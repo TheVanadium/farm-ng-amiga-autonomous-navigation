@@ -1,17 +1,8 @@
 import os
 import open3d as o3d
 import numpy as np
-from scipy.stats import pearsonr
-from typing import TypeAlias
-import matplotlib.pyplot as plt
-import json
-
-
-from pathlib import Path
 
 from backend.config import *
-from backend.robot_utils import walk_towards, format_track
-from fastapi import BackgroundTasks
 from fastapi import APIRouter
 from fastapi import Request
 

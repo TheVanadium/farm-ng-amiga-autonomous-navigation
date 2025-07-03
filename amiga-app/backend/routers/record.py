@@ -4,10 +4,7 @@ from farm_ng.track.track_pb2 import Track
 from farm_ng.core.event_service_pb2 import SubscribeRequest
 from farm_ng.core.uri_pb2 import Uri
 
-from fastapi import BackgroundTasks
-from fastapi import APIRouter
-
-from fastapi import Request
+from fastapi import BackgroundTasks, APIRouter, Request
 
 from pathlib import Path
 
