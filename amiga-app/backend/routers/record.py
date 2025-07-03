@@ -1,19 +1,12 @@
-import asyncio
-import json
-
 from farm_ng.core.event_client_manager import EventClient
 from farm_ng.core.events_file_writer import proto_to_json_file
-from farm_ng.core.event_service_pb2 import EventServiceConfig
 from farm_ng.track.track_pb2 import Track
 from farm_ng.core.event_service_pb2 import SubscribeRequest
 from farm_ng.core.uri_pb2 import Uri
 
-from fastapi import HTTPException
 from fastapi import BackgroundTasks
 from fastapi import APIRouter
 
-from google.protobuf.json_format import ParseDict
-from google.protobuf.empty_pb2 import Empty
 from fastapi import Request
 
 from pathlib import Path
