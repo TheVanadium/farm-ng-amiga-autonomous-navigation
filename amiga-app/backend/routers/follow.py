@@ -1,28 +1,14 @@
-import asyncio
 from pathlib import Path
-
 
 from farm_ng.core.events_file_reader import proto_from_json_file
 from farm_ng.track.track_pb2 import Track, TrackFollowRequest, TrackFollowerState
 
-from fastapi import APIRouter
-from fastapi import HTTPException
-from fastapi import Request
+from fastapi import APIRouter, Request
 from google.protobuf.empty_pb2 import Empty
 
 from grpc.aio import AioRpcError
 
-from farm_ng.core.event_client_manager import EventClient
-from fastapi import WebSocket, WebSocketDisconnect
-from farm_ng.core.event_service_pb2 import SubscribeRequest
-from farm_ng.core.uri_pb2 import Uri
-
-from google.protobuf.json_format import MessageToJson
-
-
 from backend.config import *
-from backend.robot_utils import walk_towards
-import base64
 
 
 router = APIRouter()

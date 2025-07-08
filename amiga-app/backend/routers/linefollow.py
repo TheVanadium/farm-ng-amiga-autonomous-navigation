@@ -4,8 +4,6 @@ from multiprocessing import Queue
 import os
 
 from farm_ng.core.event_client_manager import EventClient
-from farm_ng.core.events_file_writer import proto_to_json_file
-from farm_ng.core.event_service_pb2 import EventServiceConfig
 from farm_ng.track.track_pb2 import (
     Track,
     TrackFollowRequest,
@@ -14,20 +12,13 @@ from farm_ng.track.track_pb2 import (
     TrackFollowerProgress,
 )
 from farm_ng.filter.filter_pb2 import FilterState
-from farm_ng_core_pybind import Isometry3F64
-from farm_ng_core_pybind import Pose3F64
-from farm_ng_core_pybind import Rotation3F64
+from farm_ng_core_pybind import Isometry3F64, Pose3F64
 from farm_ng.core.event_service_pb2 import SubscribeRequest
 from farm_ng.core.uri_pb2 import Uri
-from farm_ng.core.events_file_reader import proto_from_json_file
 
 import numpy as np
 
-from fastapi import HTTPException
-from fastapi import BackgroundTasks
-from fastapi import APIRouter
-from fastapi import Request
-from fastapi import Depends
+from fastapi import BackgroundTasks, APIRouter, Request
 
 from pydantic import BaseModel
 
