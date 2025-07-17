@@ -93,7 +93,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[dict, None]:
             oak_manager = None
         else:
             oak_manager = Process(
-                target=startCameras, args=(camera_msg_queue, config.POINTCLOUD_DATA_DIR)
+                target=startCameras, args=(camera_msg_queue, config.POINTCLOUD_DATA_DIR), daemon=True
             )
             oak_manager.start()
             print(f"Starting oak manager with PID {oak_manager.pid}")

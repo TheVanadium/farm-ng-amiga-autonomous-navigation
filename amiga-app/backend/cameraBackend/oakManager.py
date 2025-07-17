@@ -84,6 +84,8 @@ def startCameras(queue: Queue, POINTCLOUD_DATA_DIR: str) -> None:
         # positioning. Calibration requires calibration pattern and is
         # mandatory. Alignment is optional and can be done on the fly.
         while True:
+            if os.getppid() == 1:     # 1 means parent is gone
+                sys.exit(1)
             try:
                 msg = queue.get(timeout=0.1)  # Blocking
                 action = msg.get("action", "No action")
