@@ -40,6 +40,6 @@ python3 main.py --desktop
 ```
 
 ### Building the App on the Amiga
-2. Configure the `.env` file to the manifest file's `app_route` value
-3. Build the application: `./build.sh`
-4. Install on Amiga: `./install.sh`
+1. Configure the `.env` file to the manifest file's `app_route` value
+2. Build and install the application: `./build.sh`
+3. Install on Amiga: `./install.sh`
