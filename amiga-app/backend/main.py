@@ -52,12 +52,9 @@ from routers import tracks, record, follow, linefollow, pointcloud
 from cameraBackend.oakManager import startCameras
 
 from typing import AsyncGenerator, Any, Optional
-from typing import Optional
 
 global oak_manager
 oak_manager: Optional[Process] = None
-global camera_msg_queue
-camera_msg_queue: Queue = Queue()
 
 
 @asynccontextmanager
@@ -65,57 +62,61 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[dict, None]:
     print("Initializing App...")
 
     if app.state.desktop:
-        yield {
+        services = {
             "event_manager": None,
             "oak_manager": None,
             "camera_msg_queue": None,
             "vars": None,
         }
-        oak_manager = None
-
     else:
-        # config with all the configs
-        base_config_list: EventServiceConfigList = proto_from_json_file(
-            args.config, EventServiceConfigList()
+        services = await setup_services(
+            args=args, camera_msg_queue=Queue(), config=config
         )
-
-        # filter out services to pass to the events client manager
-        service_config_list = EventServiceConfigList()
-        for config in base_config_list.configs:
-            if config.port == 0:
-                continue
-            service_config_list.configs.append(config)
-
-        event_manager = EventClientSubscriptionManager(config_list=service_config_list)
-
-        no_cameras = False
-        if no_cameras:
-            oak_manager = None
-        else:
-            oak_manager = Process(
-                target=startCameras,
-                args=(camera_msg_queue, config.POINTCLOUD_DATA_DIR),
-                daemon=True,
-            )
-            oak_manager.start()
-            print(f"Starting oak manager with PID {oak_manager.pid}")
-
-        asyncio.create_task(event_manager.update_subscriptions())
-
-        yield {
-            "event_manager": event_manager,
-            "oak_manager": oak_manager,
-            "camera_msg_queue": camera_msg_queue,
-            # Yield dict cannot be changed directly, but objects inside it can
-            # So we use a vars item for all our non constant variables
-            "vars": config.StateVars(),
-        }
+    yield services
 
     # Shutdown cameras properly
-    if oak_manager != None:
+    if services["oak_manager"] != None:
         print("Stopping camera services...")
-        oak_manager.terminate()
-        oak_manager.join()
+        services["oak_manager"].terminate()
+        services["oak_manager"].join()
+
+
+async def setup_services(args, camera_msg_queue, config, no_cameras=False):
+    # config with all the configs
+    base_config_list: EventServiceConfigList = proto_from_json_file(
+        args.config, EventServiceConfigList()
+    )
+
+    # filter out services to pass to the events client manager
+    service_config_list = EventServiceConfigList()
+    for cfg in base_config_list.configs:
+        if cfg.port == 0:
+            continue
+        service_config_list.configs.append(cfg)
+
+    event_manager = EventClientSubscriptionManager(config_list=service_config_list)
+
+    if no_cameras:
+        oak_manager = None
+    else:
+        oak_manager = Process(
+            target=startCameras,
+            args=(camera_msg_queue, config.POINTCLOUD_DATA_DIR),
+            daemon=True,
+        )
+        oak_manager.start()
+        print(f"Starting oak manager with PID {oak_manager.pid}")
+
+    asyncio.create_task(event_manager.update_subscriptions())
+
+    return {
+        "event_manager": event_manager,
+        "oak_manager": oak_manager,
+        "camera_msg_queue": camera_msg_queue,
+        # Yield dict cannot be changed directly, but objects inside it can
+        # So we use a vars item for all our non constant variables
+        "vars": config.StateVars(),
+    }
 
 
 app = FastAPI(lifespan=lifespan)
@@ -170,19 +171,29 @@ async def filter_data(websocket: WebSocket, every_n: int = 3) -> None:
 
     async for _, msg in client.subscribe(
         SubscribeRequest(
-            uri=Uri(path=f"/state", query=f"service_name={full_service_name}"),
+            uri=Uri(path="/state", query=f"service_name={full_service_name}"),
             every_n=every_n,
         ),
         decode=True,
     ):
         try:
             await websocket.send_json(MessageToJson(msg))
-        except WebSocketDisconnect as e:
+        except WebSocketDisconnect:
             disconnected = True
             break
 
     if not disconnected:
         await websocket.close()
+
+
+class Arguments:
+    def __init__(
+        self, config: str, port: int, debug: bool = False, desktop: bool = False
+    ) -> None:
+        self.config = config
+        self.port = port
+        self.debug = debug
+        self.desktop = desktop
 
 
 if __name__ == "__main__":
@@ -208,15 +219,6 @@ if __name__ == "__main__":
         raise AttributeError(
             "PORT is not defined in the config module. Please set it before running the server."
         )
-
-    class Arguments:
-        def __init__(
-            self, config: str, port: int, debug: bool = False, desktop: bool = False
-        ) -> None:
-            self.config = config
-            self.port = port
-            self.debug = debug
-            self.desktop = desktop
 
     args = Arguments(
         config="/opt/farmng/config.json",
