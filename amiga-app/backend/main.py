@@ -69,19 +69,19 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[dict, None]:
             "vars": None,
         }
     else:
-        services = await setup_services(
-            args=args, camera_msg_queue=Queue(), config=config
-        )
+        services = await setup_services(args=args, camera_msg_queue=Queue())
     yield services
 
     # Shutdown cameras properly
-    if services["oak_manager"] != None:
+    if services["oak_manager"] is not None:
         print("Stopping camera services...")
         services["oak_manager"].terminate()
         services["oak_manager"].join()
 
 
-async def setup_services(args, camera_msg_queue, config, no_cameras=False):
+async def setup_services(
+    args: Arguments, camera_msg_queue: Queue, no_cameras: bool = False
+) -> dict[str, Any]:
     # config with all the configs
     base_config_list: EventServiceConfigList = proto_from_json_file(
         args.config, EventServiceConfigList()

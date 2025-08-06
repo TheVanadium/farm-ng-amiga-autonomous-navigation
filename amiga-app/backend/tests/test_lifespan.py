@@ -9,7 +9,7 @@ import config  # type: ignore
 class TestLifespan(unittest.IsolatedAsyncioTestCase):
     async def test_setup_services(self):
         args = Arguments(config="config.json", port=config.PORT)
-        for service in await setup_services(args, Queue(), config):
+        for service in await setup_services(args, Queue()):
             self.assertTrue(service is not None)
 
 
