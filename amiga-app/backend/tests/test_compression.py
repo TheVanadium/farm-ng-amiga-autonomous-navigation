@@ -1,6 +1,7 @@
 from cameraBackend.pointCloudCompression import compress_pcd, decompress_drc
 import open3d
 import unittest
+import os
 
 
 class TestCompression(unittest.TestCase):
@@ -12,8 +13,9 @@ class TestCompression(unittest.TestCase):
             pcd2 = pcd2.voxel_down_sample(voxel_size=0.1)
             assert abs(len(pcd.points) - len(pcd2.points)) <= 0.001 * len(pcd.points)
 
-        _test_loss("tests/test_data/test_1.ply")
-        _test_loss("tests/test_data/test_2.ply")
+        path = os.path.join(os.path.dirname(__file__), "test_data")
+        _test_loss(f"{path}/test_1.ply")
+        _test_loss(f"{path}/test_2.ply")
 
 
 if __name__ == "__main__":
