@@ -84,15 +84,16 @@ class PointCloudFusion:
             os.makedirs(os.path.dirname(camera_path), exist_ok=True)
             o3d.io.write_point_cloud(camera_path, camera.point_cloud)
 
-        fused_point_cloud = (
-            self._cameras[0].point_cloud
-            + self._cameras[1].point_cloud
-            + self._cameras[2].point_cloud
-        )
-        combined_path = f"{self._POINTCLOUD_DATA_DIR}{line_name}/row_{row_number}/capture_{capture_number}/combined.drc"
+        pcds = [self._cameras[i].point_cloud for i in range(3)]
+        fused_pcd = sum(pcds)
+        combined_path = f"{self._POINTCLOUD_DATA_DIR}{line_name}/row_{row_number}/capture_{capture_number}"
         os.makedirs(os.path.dirname(combined_path), exist_ok=True)
-        with open(combined_path, "wb") as f:
-            f.write(compress_pcd(fused_point_cloud))
+        with open(f"{combined_path}/combined.drc", "wb") as f:
+            f.write(compress_pcd(fused_pcd))
+        for i, pcd in enumerate(pcds):
+            with open(f"{combined_path}/camera_{i}.drc", "wb") as f:
+                f.write(compress_pcd(pcd))
+        
         print("Saved compressed point cloud")
 
     def get_point_cloud(self) -> o3d.geometry.PointCloud:
