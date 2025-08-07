@@ -3,6 +3,7 @@ import open3d
 import unittest
 import os
 
+
 class TestCompression(unittest.TestCase):
     def test_loss_suite(self) -> None:
         def _test_loss(filename: str) -> None:
