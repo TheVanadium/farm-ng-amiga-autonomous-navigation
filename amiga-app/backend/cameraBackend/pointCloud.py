@@ -9,6 +9,8 @@ import open3d as o3d
 
 from .camera import Camera
 
+from .pointCloudCompression import compress_pcd
+
 
 class PointCloudFusion:
     """
@@ -87,10 +89,11 @@ class PointCloudFusion:
             + self._cameras[1].point_cloud
             + self._cameras[2].point_cloud
         )
-        combined_path = f"{self._POINTCLOUD_DATA_DIR}{line_name}/row_{row_number}/capture_{capture_number}/combined.ply"
+        combined_path = f"{self._POINTCLOUD_DATA_DIR}{line_name}/row_{row_number}/capture_{capture_number}/combined.drc"
         os.makedirs(os.path.dirname(combined_path), exist_ok=True)
-        o3d.io.write_point_cloud(combined_path, fused_point_cloud)
-        print("Saved point cloud")
+        with open(combined_path, 'wb') as f:
+            f.write(compress_pcd(fused_point_cloud))
+        print("Saved compressed point cloud")
 
     def get_point_cloud(self) -> o3d.geometry.PointCloud:
         for camera in self._cameras:
