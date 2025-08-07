@@ -91,7 +91,7 @@ class PointCloudFusion:
         )
         combined_path = f"{self._POINTCLOUD_DATA_DIR}{line_name}/row_{row_number}/capture_{capture_number}/combined.drc"
         os.makedirs(os.path.dirname(combined_path), exist_ok=True)
-        with open(combined_path, 'wb') as f:
+        with open(combined_path, "wb") as f:
             f.write(compress_pcd(fused_point_cloud))
         print("Saved compressed point cloud")
 
