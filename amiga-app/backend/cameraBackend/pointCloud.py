@@ -93,7 +93,7 @@ class PointCloudFusion:
         for i, pcd in enumerate(pcds):
             with open(f"{combined_path}/camera_{i}.drc", "wb") as f:
                 f.write(compress_pcd(pcd))
-        
+
         print("Saved compressed point cloud")
 
     def get_point_cloud(self) -> o3d.geometry.PointCloud:
