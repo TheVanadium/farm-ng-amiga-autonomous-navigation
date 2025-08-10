@@ -73,7 +73,10 @@ def startCameras(queue: Queue, POINTCLOUD_DATA_DIR: str) -> None:
         print(f"Initializing camera {device_info.name}")
         port = int(STREAM_PORT_BASE + device_info.name[-2:])
         # Initialize camera
-        cameras.append(Camera(device_info, port, PIPELINE_FPS, VIDEO_FPS))
+        try:
+            cameras.append(Camera(device_info, port, PIPELINE_FPS, VIDEO_FPS))
+        except Exception as e:
+            print(f"Failed to initialize camera {device_info.name}: {e}")
         sleep(2)  # BUG: problem with DepthAI? Can't initialize cameras all at once
 
     pointCloudFusion = PointCloudFusion(cameras, POINTCLOUD_DATA_DIR)
