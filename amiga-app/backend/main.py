@@ -79,9 +79,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[dict, None]:
         services["oak_manager"].join()
 
 
-async def setup_services(
-    args: Arguments, camera_msg_queue: Queue, no_cameras: bool = False
-) -> dict[str, Any]:
+async def setup_services(args: Arguments, camera_msg_queue: Queue) -> dict[str, Any]:
     # config with all the configs
     base_config_list: EventServiceConfigList = proto_from_json_file(
         args.config, EventServiceConfigList()
@@ -95,16 +93,14 @@ async def setup_services(
 
     event_manager = EventClientSubscriptionManager(config_list=service_config_list)
 
-    if no_cameras:
-        oak_manager = None
-    else:
-        oak_manager = Process(
-            target=startCameras,
-            args=(camera_msg_queue, config.POINTCLOUD_DATA_DIR),
-            daemon=True,
-        )
-        oak_manager.start()
-        print(f"Starting oak manager with PID {oak_manager.pid}")
+    # initialize cameras
+    oak_manager = Process(
+        target=startCameras,
+        args=(camera_msg_queue, config.POINTCLOUD_DATA_DIR),
+        daemon=True,
+    )
+    oak_manager.start()
+    print(f"Starting oak manager with PID {oak_manager.pid}")
 
     asyncio.create_task(event_manager.update_subscriptions())
 
@@ -135,14 +131,10 @@ app.include_router(linefollow.router)
 app.include_router(pointcloud.router)
 
 
-# not sure why params are necessary but won't touch it in case the robot complains
-# could use testing
 def handle_sigterm(signum: Any, frame: Any) -> None:
     print("Received SIGTERM, stopping camera services")
-
-    if oak_manager != None:
-        oak_manager.terminate()
-        oak_manager.join()
+    oak_manager.terminate()
+    oak_manager.join()
     sys.exit(0)
 
 
