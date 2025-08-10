@@ -89,10 +89,9 @@ async def setup_services(
 
     # filter out services to pass to the events client manager
     service_config_list = EventServiceConfigList()
-    for cfg in base_config_list.configs:
-        if cfg.port == 0:
-            continue
-        service_config_list.configs.append(cfg)
+    service_config_list.configs.extend(
+        [cfg for cfg in base_config_list.configs if cfg.port != 0]
+    )
 
     event_manager = EventClientSubscriptionManager(config_list=service_config_list)
 
