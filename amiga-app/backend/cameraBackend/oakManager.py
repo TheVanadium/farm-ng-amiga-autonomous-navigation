@@ -63,7 +63,6 @@ def startCameras(queue: Queue, POINTCLOUD_DATA_DIR: str) -> None:
     signal.signal(signal.SIGTERM, handle_sigterm)
 
     device_infos = dai.Device.getAllAvailableDevices()
-    device_infos.sort(key=lambda x: x.name, reverse=True)  # Sort by ip
     print(
         f"Found {len(device_infos)} devices: {[device_info.name for device_info in device_infos]}"
     )
