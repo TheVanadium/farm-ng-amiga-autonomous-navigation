@@ -71,7 +71,6 @@ def startCameras(queue: Queue, POINTCLOUD_DATA_DIR: str) -> None:
             continue
         print(f"Initializing camera {device_info.name}")
         port = int(STREAM_PORT_BASE + device_info.name[-2:])
-        # Initialize camera
         try:
             cameras.append(Camera(device_info, port, PIPELINE_FPS, VIDEO_FPS))
         except Exception as e:
