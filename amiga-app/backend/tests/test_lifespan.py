@@ -2,9 +2,7 @@ import unittest
 from main import setup_services, Arguments
 from multiprocessing import Queue
 import os
-
-# this is bad, but I can't figure out how to import config mypy complaining
-import config  # type: ignore
+import config
 
 
 class TestLifespan(unittest.IsolatedAsyncioTestCase):
