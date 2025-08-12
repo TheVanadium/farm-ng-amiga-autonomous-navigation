@@ -74,7 +74,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[dict, None]:
 
     # Shutdown cameras properly
     if services["oak_manager"] is not None:
-        print("Stopping camera services...")
+        print("Stopping camera services...")  # type: ignore[unreachable]
         services["oak_manager"].terminate()
         services["oak_manager"].join()
 
