@@ -44,8 +44,7 @@ from contextlib import asynccontextmanager
 
 from multiprocessing import Process, Queue
 
-# this is bad, but I can't figure out how to import config mypy complaining
-import config  # type: ignore
+import config
 
 from routers import tracks, record, follow, linefollow, pointcloud
 
