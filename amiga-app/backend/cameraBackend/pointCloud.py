@@ -81,8 +81,8 @@ class PointCloudFusion:
         path = f"{self._POINTCLOUD_DATA_DIR}/{line_name}/row_{row_number}/capture_{capture_number}"
         if not os.path.exists(path):
             os.makedirs(path)
-        for camera in self._cameras:
+        for i, camera in enumerate(self._cameras):
             camera.update()
-            camera_path = f"{path}/{camera.name}.drc"
+            camera_path = f"{path}/camera-{i}.drc"
             with open(camera_path, "wb") as f:
                 f.write(compress_pcd(camera.point_cloud))
