@@ -187,6 +187,7 @@ class Camera:
         flip_z = np.eye(4)
         flip_z[2, 2] = -1.0
         self.transform_matrix = self.cam_to_world @ self.alignment @ flip_z
+        self.transform_matrix[:3, 3] *= 1000.0  # Convert from meters to mm
 
         # print(self.pinhole_camera_intrinsic)
 
@@ -336,7 +337,6 @@ class Camera:
 
         # R = rotation matrix , t = translation vector
         R, t = self.transform_matrix[:3, :3], self.transform_matrix[:3, 3]
-        t *= 1000  # Convert from meters to mm
         transformed_points = raw_points @ R.T - t.reshape((1, 3))
 
         self.point_cloud.points = o3d.utility.Vector3dVector(transformed_points)
