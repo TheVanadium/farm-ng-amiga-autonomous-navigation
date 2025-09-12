@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Response, Request
 import json
 from pathlib import Path
 
-from backend.config import *
+from backend.config import TRACKS_DIR
 from pydantic import BaseModel
 import signal
 import os

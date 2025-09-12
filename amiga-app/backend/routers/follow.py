@@ -8,7 +8,7 @@ from google.protobuf.empty_pb2 import Empty
 
 from grpc.aio import AioRpcError
 
-from backend.config import *
+from backend.config import StateVars, TRACKS_DIR
 
 
 router = APIRouter()
@@ -80,13 +80,13 @@ async def resume_following(request: Request):
 async def stop_following(request: Request):
     """Instructs the robot to stop track following."""
     event_manager = request.state.event_manager
-    vars: StateVars = request.state.vars
+    sv: StateVars = request.state.vars
     client = event_manager.clients["track_follower"]
     try:
         await client.request_reply("/cancel", Empty()), 0.5
     except AioRpcError:
         return {"success": False, "message": "Failed to call /cancel"}
 
-    vars.following_track = False
+    sv.following_track = False
 
     return {"success": True, "message": "Stopping track following"}

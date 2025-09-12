@@ -8,7 +8,7 @@ from fastapi import BackgroundTasks, APIRouter, Request
 
 from pathlib import Path
 
-from backend.config import *
+from backend.config import TRACKS_DIR, StateVars
 
 router = APIRouter()
 
@@ -18,12 +18,12 @@ async def start_recording(
     request: Request, track_name: str, background_tasks: BackgroundTasks
 ):
     """Starts recording a track using the filter service client."""
-    vars: StateVars = request.state.vars
-    recording_active = vars.track_recording
+    sv: StateVars = request.state.vars
+    recording_active = sv.track_recording
     if recording_active:
         return {"error": "recording is already active"}
 
-    vars.track_recording = True  # Set recording flag to true
+    sv.track_recording = True  # Set recording flag to true
     output_dir = Path(TRACKS_DIR)
 
     # Run the recording as a background task
@@ -34,8 +34,8 @@ async def start_recording(
 
 async def record_track(request: Request, track_name: str, output_dir: Path) -> None:
     """Runs the filter service client to record a track."""
-    vars: StateVars = request.state.vars
-    vars.track_recording = True
+    sv: StateVars = request.state.vars
+    sv.track_recording = True
 
     # Ensure output directory exists
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -49,12 +49,12 @@ async def record_track(request: Request, track_name: str, output_dir: Path) -> N
     # Subscribe to the filter track topic
     async for _, message in client.subscribe(
         SubscribeRequest(
-            uri=Uri(path=f"/track", query=f"service_name={service_name}"),
+            uri=Uri(path="/track", query=f"service_name={service_name}"),
             every_n=1,
         ),
         decode=True,
     ):
-        if not vars.track_recording:
+        if not sv.track_recording:
             print("Track Recording stopped.")
             break
 
@@ -70,10 +70,10 @@ async def record_track(request: Request, track_name: str, output_dir: Path) -> N
 @router.post("/record/stop")
 async def stop_recording(request: Request):
     """Stops the recording process."""
-    vars: StateVars = request.state.vars
-    recording_active = vars.track_recording
+    sv: StateVars = request.state.vars
+    recording_active = sv.track_recording
     if not recording_active:
         return {"message": "No recording in progress."}
 
-    vars.track_recording = False  # Stop the recording process
+    sv.track_recording = False  # Stop the recording process
     return {"message": "Recording stopped successfully."}

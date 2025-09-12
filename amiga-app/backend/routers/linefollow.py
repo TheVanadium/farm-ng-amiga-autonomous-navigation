@@ -28,7 +28,7 @@ import shutil
 
 from pathlib import Path
 
-from backend.config import *
+from backend.config import LINES_DIR, POINTCLOUD_DATA_DIR, StateVars
 from backend.robot_utils import walk_towards, format_track
 
 router = APIRouter()
@@ -60,23 +60,23 @@ async def list_lines(request: Request):
 @router.post("/line/record/start/{track_name}")
 async def start_recording(request: Request, track_name: str):
     """Starts recording a track using the filter service client."""
-    vars: StateVars = request.state.vars
-    if vars.line_recording is not None:
+    sv: StateVars = request.state.vars
+    if sv.line_recording is not None:
         return {"error": "Line recording already in progress"}
 
-    vars.line_recording = track_name
+    sv.line_recording = track_name
 
     client = request.state.event_manager.clients["filter"]
-    vars.line_start = np.array((await get_pose(client)).translation[:2])
+    sv.line_start = np.array((await get_pose(client)).translation[:2])
 
     return {"message": f"Recording started for track '{track_name}'."}
 
 
 @router.post("/line/end_creation")
 async def end_creation(request: Request):
-    vars: StateVars = request.state.vars
-    vars.line_recording = None
-    vars.turn_calibrating = False
+    sv: StateVars = request.state.vars
+    sv.line_recording = None
+    sv.turn_calibrating = False
 
 
 ###stop###
@@ -84,64 +84,64 @@ async def end_creation(request: Request):
 async def stop_recording(request: Request):
     """Stops the recording process."""
 
-    vars: StateVars = request.state.vars
-    if not vars.line_recording:
+    sv: StateVars = request.state.vars
+    if not sv.line_recording:
         return {"error": "No recording in progress."}
 
     client = request.state.event_manager.clients["filter"]
-    vars.line_end = np.array((await get_pose(client)).translation[:2])
+    sv.line_end = np.array((await get_pose(client)).translation[:2])
     return {"message": "Recording stopped successfully."}
 
 
 @router.post("/line/calibrate_turn/start")
 async def calibrate_turn(request: Request):
-    vars: StateVars = request.state.vars
-    if vars.turn_calibrating:
+    sv: StateVars = request.state.vars
+    if sv.turn_calibrating:
         return {"error": "Turn calibration is already active"}
     filter_client = request.state.event_manager.clients["filter"]
-    vars.turn_calibration_start = await get_pose(filter_client)
-    vars.turn_calibration_segments = 1
-    vars.turn_calibrating = True
+    sv.turn_calibration_start = await get_pose(filter_client)
+    sv.turn_calibration_segments = 1
+    sv.turn_calibrating = True
     return {"message": "Turn calibration started."}
 
 
 @router.post("/line/calibrate_turn/segment")
 async def add_turn_segment(request: Request):
-    vars: StateVars = request.state.vars
-    if not vars.turn_calibrating:
+    sv: StateVars = request.state.vars
+    if not sv.turn_calibrating:
         return {"error": "Turn calibration is not active."}
-    vars.turn_calibration_segments += 1
+    sv.turn_calibration_segments += 1
 
 
 @router.post("/line/calibrate_turn/end")
 async def end_turn_calibration(request: Request):
-    vars: StateVars = request.state.vars
-    if not vars.turn_calibrating:
+    sv: StateVars = request.state.vars
+    if not sv.turn_calibrating:
         return {"error": "Turn calibration is not active"}
     filter_client = request.state.event_manager.clients["filter"]
-    vars.turn_calibrating = False
-    num_segments = vars.turn_calibration_segments
-    start_position = np.array(vars.turn_calibration_start.translation[:2])
+    sv.turn_calibrating = False
+    num_segments = sv.turn_calibration_segments
+    start_position = np.array(sv.turn_calibration_start.translation[:2])
     end_position = np.array((await get_pose(filter_client)).translation[:2])
     turn_diff = end_position - start_position
-    line_diff = vars.line_end - vars.line_start
+    line_diff = sv.line_end - sv.line_start
     line_direction = line_diff / np.linalg.norm(line_diff)
     left_turn_direction = np.array((-line_direction[1], line_direction[0]))
     turn_length = np.abs((turn_diff / num_segments).dot(left_turn_direction))
-    vars.turn_length = turn_length
+    sv.turn_length = turn_length
 
     line_data = {
-        "start": vars.line_start.tolist(),
-        "end": vars.line_end.tolist(),
+        "start": sv.line_start.tolist(),
+        "end": sv.line_end.tolist(),
         "turn_length": turn_length,
     }
     json_text = json.dumps(line_data)
     output_dir = Path(LINES_DIR)
-    json_path = output_dir / f"{vars.line_recording}.json"
+    json_path = output_dir / f"{sv.line_recording}.json"
     with open(json_path, "w") as line_file:
         line_file.write(json_text)
 
-    vars.line_recording = None
+    sv.line_recording = None
 
     return {"message": "Turn calibration complete."}
 
@@ -165,8 +165,8 @@ async def follow_line(
     data: LineFollowData,
     background_tasks: BackgroundTasks,
 ):
-    vars: StateVars = request.state.vars
-    if vars.following_track:
+    sv: StateVars = request.state.vars
+    if sv.following_track:
         return {"error": "Line is currently being followed"}
 
     line_path = Path(LINES_DIR) / f"{line_name}.json"
@@ -180,7 +180,7 @@ async def follow_line(
     line_end = np.array(line_data["end"])
     turn_length = line_data["turn_length"]
 
-    if vars.following_track:
+    if sv.following_track:
         return {"error": "Line is currently being followed"}
 
     remaining_rows = data.num_rows
@@ -250,7 +250,7 @@ async def follow_line(
     clear_line_data(line_name)
     await track_client.request_reply("/set_track", TrackFollowRequest(track=line_track))
     await track_client.request_reply("/start", Empty())
-    vars.following_track = True
+    sv.following_track = True
 
     background_tasks.add_task(
         handle_image_capture,
@@ -265,7 +265,7 @@ async def follow_line(
 
 
 async def handle_image_capture(
-    vars: StateVars,
+    sv: StateVars,
     camera_msg_queue: Queue,
     client: EventClient,
     line_name: str,
@@ -286,18 +286,18 @@ async def handle_image_capture(
     # should correspond to the size of the bounding box defined in volume estimation
     bounding_box_length: float = 0.5
 
-    vars.track_follow_id += 1
-    track_follow_id = vars.track_follow_id
+    sv.track_follow_id += 1
+    track_follow_id = sv.track_follow_id
     capture_number = 0
 
     async for _, message in client.subscribe(
         SubscribeRequest(
-            uri=Uri(path=f"/state", query=f"service_name=track_follower"),
+            uri=Uri(path="/state", query="service_name=track_follower"),
             every_n=1,
         ),
         decode=True,
     ):
-        if track_follow_id != vars.track_follow_id:
+        if track_follow_id != sv.track_follow_id:
             print("Exiting old loop")
             break
         state: TrackFollowerState = message

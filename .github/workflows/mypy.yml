@@ -1,4 +1,4 @@
-name: Lint mypy
+name: Lint
 
 on:
   push:
@@ -32,3 +32,8 @@ jobs:
           cd amiga-app/
           source .venv/bin/activate
           mypy backend/*.py
+      - name: Run ruff
+        run: |
+          cd amiga-app/backend/
+          source .venv/bin/activate
+          python3 -m ruff check .

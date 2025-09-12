@@ -2,7 +2,7 @@ import os
 
 from fastapi import APIRouter, Request
 
-from backend.config import *
+from backend.config import CALIBRATION_DATA_DIR, POINTCLOUD_DATA_DIR
 
 router = APIRouter()
 
