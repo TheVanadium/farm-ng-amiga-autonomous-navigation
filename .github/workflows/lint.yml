@@ -1,4 +1,4 @@
-name: Lint mypy
+name: Lint
 
 on:
   push:
@@ -25,10 +25,13 @@ jobs:
         run: |
           cd amiga-app/
           python3 -m venv .venv
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -r requirements.txt
       - name: Run mypy
         run: |
           cd amiga-app/
-          source .venv/bin/activate
-          mypy backend/*.py
+          .venv/bin/mypy backend/*.py
+      - name: Run ruff
+        run: |
+          cd amiga-app/
+          .venv/bin/ruff check .

@@ -2,7 +2,7 @@ import os
 import open3d as o3d
 import numpy as np
 
-from backend.config import *
+from backend.config import POINTCLOUD_DATA_DIR, linear_regression_parameters
 from fastapi import APIRouter
 from fastapi import Request
 
@@ -54,8 +54,6 @@ def estimate_volume(point_cloud: o3d.geometry.PointCloud) -> float:
     average_height = z_upper - average_z
 
     volume_estimate = average_height * filtered_area / 1000  # cm^3
-
-    percent_size_change = (num_points - len(point_cloud)) / num_points
 
     point_cloud = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(point_cloud))
     point_cloud.colors = o3d.utility.Vector3dVector(colors)

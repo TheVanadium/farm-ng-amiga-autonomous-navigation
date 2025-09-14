@@ -15,3 +15,5 @@ venv/
 
 amiga-app/lines/*
 !amiga-app/lines/.gitkeep
+
+.ruff_cache/
