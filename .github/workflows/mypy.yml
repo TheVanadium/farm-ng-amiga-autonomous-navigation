@@ -34,6 +34,7 @@ jobs:
           mypy backend/*.py
       - name: Run ruff
         run: |
-          cd amiga-app/backend/
+          cd amiga-app/
           source .venv/bin/activate
+          cd backend/
           python3 -m ruff check .
