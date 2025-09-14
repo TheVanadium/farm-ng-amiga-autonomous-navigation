@@ -66,7 +66,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.repository.default_branch }}
-          path: base
+          path: amiga/app
 
       - name: Set up Python 3.11.9
         uses: actions/setup-python@v5
@@ -76,8 +76,8 @@ jobs:
       - name: Count Line Diff
         run: |
           pip install tabulate
-          BASE="$GITHUB_WORKSPACE/base"
-          PR="$GITHUB_WORKSPACE/pr"
+          BASE="$GITHUB_WORKSPACE/base/amiga-app/backend"
+          PR="$GITHUB_WORKSPACE/pr/amiga-app/backend"
           cp "$BASE/sz.py" .
           echo "loc_content<<EOF" >> "$GITHUB_ENV"
           python sz.py "$BASE" "$PR" >> "$GITHUB_ENV"
