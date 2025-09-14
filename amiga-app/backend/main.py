@@ -44,8 +44,7 @@ async def setup_services(args: argparse.Namespace, camera_msg_queue: Queue, no_c
 
     event_manager = EventClientSubscriptionManager(config_list=service_config_list)
 
-    if no_cameras:
-        oak_manager = None
+    if no_cameras: oak_manager = None
     else:
         oak_manager = Process(target=startCameras,args=(camera_msg_queue, config.POINTCLOUD_DATA_DIR),daemon=True)
         oak_manager.start()
@@ -103,14 +102,10 @@ async def filter_data(websocket: WebSocket, every_n: int = 3) -> None:
     disconnected = False
 
     async for _, msg in client.subscribe(
-        SubscribeRequest(
-            uri=Uri(path="/state", query=f"service_name={FULL_SERVICE_NAME}"),
-            every_n=every_n,
-        ),
+        SubscribeRequest(uri=Uri(path="/state", query=f"service_name={FULL_SERVICE_NAME}"), every_n=every_n),
         decode=True,
     ):
-        try:
-            await websocket.send_json(MessageToJson(msg))
+        try: await websocket.send_json(MessageToJson(msg))
         except WebSocketDisconnect:
             disconnected = True
             break
