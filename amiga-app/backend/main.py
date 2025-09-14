@@ -60,15 +60,7 @@ oak_manager: Optional[Process] = None
 async def lifespan(app: FastAPI) -> AsyncGenerator[dict, None]:
     print("Initializing App...")
 
-    if app.state.desktop:
-        services = {
-            "event_manager": None,
-            "oak_manager": None,
-            "camera_msg_queue": None,
-            "vars": None,
-        }
-    else:
-        services = await setup_services(args=args, camera_msg_queue=Queue())
+    services = await setup_services(args=args, camera_msg_queue=Queue())
     yield services
 
     # Shutdown cameras properly
@@ -187,16 +179,14 @@ async def filter_data(websocket: WebSocket, every_n: int = 3) -> None:
 
 class Arguments:
     def __init__(
-        self, config: str, port: int, debug: bool = False, desktop: bool = False
+        self, config: str, port: int, debug: bool = False
     ) -> None:
         self.config = config
         self.port = port
         self.debug = debug
-        self.desktop = desktop
 
 
 if __name__ == "__main__":
-    # get command line arg --debug
     import argparse
 
     parser = argparse.ArgumentParser(description="Run the FastAPI server.")
@@ -205,10 +195,12 @@ if __name__ == "__main__":
         action="store_true",
         help="Run the server in debug mode, serving the React app.",
     )
+    # default value is the path on the amiga
     parser.add_argument(
-        "--desktop",
-        action="store_true",
-        help="Run the server in on desktop mode, without robot functionality.",
+        "--config",
+        type=str,
+        default="/opt/farmng/config.json",
+        help="Path to the config file.",
     )
 
     # Ensure PORT is defined, either from config or set a default value
@@ -219,14 +211,13 @@ if __name__ == "__main__":
             "PORT is not defined in the config module. Please set it before running the server."
         )
 
-    args = Arguments(
-        config="/opt/farmng/config.json",
-        port=PORT,
-        debug=parser.parse_args().debug,
-        desktop=parser.parse_args().desktop,
-    )
+    cli_args = parser.parse_args()
 
-    # NOTE: we only serve the react app in debug mode
+    args = Arguments(
+        config=cli_args.config,
+        port=PORT,
+        debug=cli_args.debug,
+    )
 
     if args.debug:
         react_build_directory = Path(__file__).parent / ".." / "ts" / "dist"
@@ -236,9 +227,4 @@ if __name__ == "__main__":
             StaticFiles(directory=str(react_build_directory.resolve()), html=True),
         )
 
-    app.state.desktop = args.desktop
-
-    # print(f"camera PID: {oakManager.pid}")
-
-    # run the server
     uvicorn.run(app, host="0.0.0.0", port=args.port)  # noqa: S104

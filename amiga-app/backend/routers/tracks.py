@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Response, Request
+from fastapi import APIRouter, Response, Request
 import json
 from pathlib import Path
 
@@ -12,10 +12,6 @@ router = APIRouter()
 
 @router.get("/kill")
 async def kill_app(request: Request):
-    if request.app.state.desktop:
-        raise HTTPException(
-            status_code=403, detail="Killing the app is not allowed in desktop mode."
-        )
     os.kill(os.getpid(), signal.SIGTERM)
     return Response(status_code=200, content="Server shutting down...")
 

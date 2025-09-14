@@ -24,7 +24,6 @@ To run the backend, you must first create a manifest file (https://amiga.farm-ng
 
 The complete backend only works on an Amiga device, requiring SSH access. To obtain it, follow the instructions at https://amiga.farm-ng.com/docs/ssh/. 
 
-A limited version of the backend can be run on Linux machines using the `--desktop` flag.
 ```bash
 python3 -m venv venv
 source venv/Scripts/activate
@@ -34,9 +33,6 @@ pip install -r requirements.txt
 
 cd backend
 python3 main.py
-
-# if you're on a linux desktop
-python3 main.py --desktop 
 ```
 
 ### Building the App on the Amiga
