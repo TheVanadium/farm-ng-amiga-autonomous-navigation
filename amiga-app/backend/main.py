@@ -39,8 +39,7 @@ async def setup_services(args: argparse.Namespace, camera_msg_queue: Queue, no_c
     # filter out services to pass to the events client manager
     service_config_list = EventServiceConfigList()
     for cfg in base_config_list.configs:
-        if cfg.port == 0:
-            continue
+        if cfg.port == 0: continue
         service_config_list.configs.append(cfg)
 
     event_manager = EventClientSubscriptionManager(config_list=service_config_list)
@@ -81,8 +80,6 @@ def handle_sigterm(signum: Any, frame: Any) -> None:
         oak_manager.terminate()
         oak_manager.join()
     sys.exit(0)
-
-
 signal.signal(signal.SIGTERM, handle_sigterm)
 
 
