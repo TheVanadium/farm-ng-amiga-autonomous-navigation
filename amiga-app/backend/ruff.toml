@@ -1,7 +1,7 @@
 # stolen from https://github.com/tinygrad/tinygrad/blob/master/ruff.toml
 indent-width = 2
 preview = true
-target-version = "py310"
+target-version = "py311"
 
 lint.select = [
   "F",  # Pyflakes
@@ -37,13 +37,4 @@ line-length = 150
 
 exclude = [
   "cameraBackend"
-]
-
-# detect unused imports in examples
-[lint.per-file-ignores]
-"examples/**/*.py" = [
-  "W6", "E71", "E72", "E112", "E113", "E203", "E272", "E275",
-  "E303", "E304", "E501", "E702", "E703", "E731", "W191",
-  "W291", "W293", "UP039", "C416", "RET506", "RET507", "A",
-  "FURB110", "RUF018", "F541", "F841"
 ]
