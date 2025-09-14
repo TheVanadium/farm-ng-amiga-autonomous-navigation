@@ -30,7 +30,7 @@ jobs:
       - name: Run mypy
         run: |
           cd amiga-app/
-          .venv/bin/mypy backend/*.py
+          .venv/bin/mypy .
       - name: Run ruff
         run: |
           cd amiga-app/
