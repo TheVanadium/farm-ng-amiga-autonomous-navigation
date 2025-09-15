@@ -122,7 +122,6 @@ jobs:
           }' > manifest.json
 
       - name: "Run backend"
-        continue-on-error: true
         run: |
           cd amiga-app/backend
           source ../.venv/bin/activate
