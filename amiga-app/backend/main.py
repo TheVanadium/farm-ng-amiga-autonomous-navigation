@@ -105,8 +105,8 @@ async def setup_services(
         "oak_manager": oak_manager,
         "camera_msg_queue": camera_msg_queue,
         # Yield dict cannot be changed directly, but objects inside it can
-        # So we use a vars item for all our non constant variables
-        "vars": config.StateVars(),
+        # So we use a sv item for all our non constant variables
+        "sv": config.StateVars(),
     }
 
 

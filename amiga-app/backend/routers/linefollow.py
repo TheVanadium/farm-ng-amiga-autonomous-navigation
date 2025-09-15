@@ -254,7 +254,7 @@ async def follow_line(
 
     background_tasks.add_task(
         handle_image_capture,
-        vars,
+        sv,
         request.state.camera_msg_queue,
         track_client,
         line_name,
@@ -275,7 +275,7 @@ async def handle_image_capture(
 
     Args:
         client (EventClient): Track Follower Client
-        vars (StateVars):
+        sv (StateVars):
         row_indices (list[tuple[int, int]]):
     """
     current_row_number = -1
