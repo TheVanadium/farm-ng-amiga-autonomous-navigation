@@ -134,4 +134,4 @@ if __name__ == "__main__":
         react_build_directory = Path(__file__).parent / ".." / "ts" / "dist"
         app.mount("/", StaticFiles(directory=str(react_build_directory.resolve()), html=True))
 
-    uvicorn.run(app, host="0.0.0.0", port=cli_args.port)  # noqa: S104
+    uvicorn.run(app, host="0.0.0.0", port=PORT)  # noqa: S104
