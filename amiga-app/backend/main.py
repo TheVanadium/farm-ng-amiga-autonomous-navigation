@@ -1,55 +1,21 @@
-# Copyright (c) farm-ng, inc.
-#
-# Licensed under the Amiga Development Kit License (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     https://github.com/farm-ng/amiga-dev-kit/blob/main/LICENSE
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 from __future__ import annotations
-
-import signal
-import sys
-import os
+import signal, sys, os, asyncio, argparse
 from pathlib import Path
-
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-# Navigate one directory out of the location of main.py
 os.chdir(f"{Path(__file__).parent}/..")
-
-import asyncio
-from farm_ng.core.event_client_manager import EventClient
-from fastapi import WebSocket, WebSocketDisconnect
-from farm_ng.core.event_service_pb2 import SubscribeRequest
-from farm_ng.core.uri_pb2 import Uri
-from google.protobuf.json_format import MessageToJson  # type: ignore
-
-
-import uvicorn
-from farm_ng.core.event_client_manager import EventClientSubscriptionManager
-from farm_ng.core.event_service_pb2 import EventServiceConfigList
-from farm_ng.core.events_file_reader import proto_from_json_file
-
-
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
-
 from multiprocessing import Process, Queue
-
-import config
-
+from farm_ng.core.event_client_manager import EventClient, EventClientSubscriptionManager
+from farm_ng.core.event_service_pb2 import SubscribeRequest, EventServiceConfigList
+from farm_ng.core.uri_pb2 import Uri
+from farm_ng.core.events_file_reader import proto_from_json_file
+from google.protobuf.json_format import MessageToJson  # type: ignore
+import uvicorn, config
 from routers import tracks, record, follow, linefollow, pointcloud
-
 from cameraBackend.oakManager import startCameras
-
 from typing import AsyncGenerator, Any, Optional
 
 global oak_manager
@@ -58,45 +24,30 @@ oak_manager: Optional[Process] = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[dict, None]:
-    print("Initializing App...")
-
-    services = await setup_services(args=args, camera_msg_queue=Queue())
+    services = await setup_services(args=cli_args, camera_msg_queue=Queue())
     yield services
 
-    # Shutdown cameras properly
     if services["oak_manager"] is not None:
-        print("Stopping camera services...")  # type: ignore[unreachable]
-        services["oak_manager"].terminate()
+        services["oak_manager"].terminate() # type: ignore[unreachable]
         services["oak_manager"].join()
 
 
-async def setup_services(
-    args: Arguments, camera_msg_queue: Queue, no_cameras: bool = False
-) -> dict[str, Any]:
+async def setup_services(args: argparse.Namespace, camera_msg_queue: Queue, no_cameras: bool = False) -> dict[str, Any]:
     # config with all the configs
-    base_config_list: EventServiceConfigList = proto_from_json_file(
-        args.config, EventServiceConfigList()
-    )
+    base_config_list: EventServiceConfigList = proto_from_json_file(args.config, EventServiceConfigList())
 
     # filter out services to pass to the events client manager
     service_config_list = EventServiceConfigList()
     for cfg in base_config_list.configs:
-        if cfg.port == 0:
-            continue
+        if cfg.port == 0: continue
         service_config_list.configs.append(cfg)
 
     event_manager = EventClientSubscriptionManager(config_list=service_config_list)
 
-    if no_cameras:
-        oak_manager = None
+    if no_cameras: oak_manager = None
     else:
-        oak_manager = Process(
-            target=startCameras,
-            args=(camera_msg_queue, config.POINTCLOUD_DATA_DIR),
-            daemon=True,
-        )
+        oak_manager = Process(target=startCameras,args=(camera_msg_queue, config.POINTCLOUD_DATA_DIR),daemon=True)
         oak_manager.start()
-        print(f"Starting oak manager with PID {oak_manager.pid}")
 
     asyncio.create_task(event_manager.update_subscriptions())
 
@@ -112,13 +63,7 @@ async def setup_services(
 
 app = FastAPI(lifespan=lifespan)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
-    allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
-)
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 app.include_router(tracks.router)
 app.include_router(record.router)
@@ -130,14 +75,10 @@ app.include_router(pointcloud.router)
 # not sure why params are necessary but won't touch it in case the robot complains
 # could use testing
 def handle_sigterm(signum: Any, frame: Any) -> None:
-    print("Received SIGTERM, stopping camera services")
-
     if oak_manager is not None:
         oak_manager.terminate()
         oak_manager.join()
     sys.exit(0)
-
-
 signal.signal(signal.SIGTERM, handle_sigterm)
 
 
@@ -153,42 +94,26 @@ async def filter_data(websocket: WebSocket, every_n: int = 3) -> None:
         ws = new WebSocket(`${API_URL}/filter_data`)
     """
     event_manager = websocket.state.event_manager
-    full_service_name = "filter"
-    client: EventClient = event_manager.clients[full_service_name]
+    FULL_SERVICE_NAME = "filter"
+    client: EventClient = event_manager.clients[FULL_SERVICE_NAME]
 
     await websocket.accept()
 
     disconnected = False
 
     async for _, msg in client.subscribe(
-        SubscribeRequest(
-            uri=Uri(path="/state", query=f"service_name={full_service_name}"),
-            every_n=every_n,
-        ),
+        SubscribeRequest(uri=Uri(path="/state", query=f"service_name={FULL_SERVICE_NAME}"), every_n=every_n),
         decode=True,
     ):
-        try:
-            await websocket.send_json(MessageToJson(msg))
+        try: await websocket.send_json(MessageToJson(msg))
         except WebSocketDisconnect:
             disconnected = True
             break
 
-    if not disconnected:
-        await websocket.close()
-
-
-class Arguments:
-    def __init__(
-        self, config: str, port: int, debug: bool = False
-    ) -> None:
-        self.config = config
-        self.port = port
-        self.debug = debug
+    if not disconnected: await websocket.close()
 
 
 if __name__ == "__main__":
-    import argparse
-
     parser = argparse.ArgumentParser(description="Run the FastAPI server.")
     parser.add_argument(
         "--debug",
@@ -203,28 +128,10 @@ if __name__ == "__main__":
         help="Path to the config file.",
     )
 
-    # Ensure PORT is defined, either from config or set a default value
-    try:
-        PORT = config.PORT
-    except AttributeError:
-        raise AttributeError(
-            "PORT is not defined in the config module. Please set it before running the server."
-        )
-
+    PORT = config.PORT
     cli_args = parser.parse_args()
-
-    args = Arguments(
-        config=cli_args.config,
-        port=PORT,
-        debug=cli_args.debug,
-    )
-
-    if args.debug:
+    if cli_args.debug:
         react_build_directory = Path(__file__).parent / ".." / "ts" / "dist"
-        print(f"Serving React app from {react_build_directory.resolve()}")
-        app.mount(
-            "/",
-            StaticFiles(directory=str(react_build_directory.resolve()), html=True),
-        )
+        app.mount("/", StaticFiles(directory=str(react_build_directory.resolve()), html=True))
 
-    uvicorn.run(app, host="0.0.0.0", port=args.port)  # noqa: S104
+    uvicorn.run(app, host="0.0.0.0", port=cli_args.port)  # noqa: S104
