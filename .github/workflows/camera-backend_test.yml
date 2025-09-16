@@ -2,12 +2,12 @@ name: Test cameraBackend
 on:
   push:
     paths:
-      - 'amiga-app/backend/cameraBackend/**'
-      - 'amiga-app/backend/tests**'
+      - 'backend/cameraBackend/**'
+      - 'backend/tests**'
   pull_request:
     paths:
-      - 'amiga-app/backend/cameraBackend/**'
-      - 'amiga-app/backend/tests**'
+      - 'backend/cameraBackend/**'
+      - 'backend/tests**'
 jobs:
   test:
     name: Tests
@@ -24,11 +24,10 @@ jobs:
           lfs: 'true'
       - name: Mock manifest
         run: |
-          cd amiga-app/
           echo '{
             "services": {
               "example-app": {
-                "name": "amiga-app",
+                "name": "farm-ng-amiga-autonomus-navigation",
                 "type": "app",
                 "args": [
                   "--config /opt/farmng/config.json", "--port 8042"
@@ -41,7 +40,6 @@ jobs:
           }' > manifest.json
       - name: Install packages
         run: |
-          cd amiga-app/
           python3 -m venv .venv
           source .venv/bin/activate
           pip install --upgrade pip
@@ -49,7 +47,6 @@ jobs:
           pip install -r requirements.txt
       - name: Pytest
         run: |
-          cd amiga-app/
           source .venv/bin/activate
           cd backend/
           PYTHONPATH="." pytest

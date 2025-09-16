@@ -76,8 +76,8 @@ jobs:
       - name: Count Line Diff
         run: |
           pip install tabulate
-          BASE="$GITHUB_WORKSPACE/base/amiga-app/backend"
-          PR="$GITHUB_WORKSPACE/pr/amiga-app/backend"
+          BASE="$GITHUB_WORKSPACE/base/backend"
+          PR="$GITHUB_WORKSPACE/pr/backend"
           cp "$BASE/sz.py" .
           echo "loc_content<<EOF" >> "$GITHUB_ENV"
           python sz.py "$BASE" "$PR" >> "$GITHUB_ENV"

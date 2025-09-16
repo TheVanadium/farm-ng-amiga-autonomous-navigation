@@ -1,19 +1,18 @@
-amiga-app/venv/
-amiga-app/manifest.json
+manifest.json
 __pycache__/
-amiga-app/.cache/
+.cache/
 
 **/__pycache__/
-amiga-app/backend/cameraBackend/.cache/
+backend/cameraBackend/.cache/
 .DS_Store
 
 data_analysis/pointclouds/
-amiga-app/pointclouds/
+pointclouds/
 
 venv/
 .venv/
 
-amiga-app/lines/*
-!amiga-app/lines/.gitkeep
+lines/*
+!lines/.gitkeep
 
 .ruff_cache/
