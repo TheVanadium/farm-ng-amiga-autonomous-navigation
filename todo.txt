@@ -1,0 +1,4 @@
+figure out current amiga run
+since amiga probably doesn't use gps to nav, can start with the ros2 :)
+
+current bottleneck: getting ros2 to run. I can't connect through grpc over wsl2. I should ask what Stefano Carpin's team does.
