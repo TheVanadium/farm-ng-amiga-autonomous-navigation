@@ -60,7 +60,7 @@ async def list_lines(request: Request):
 @router.post("/line/record/start/{track_name}")
 async def start_recording(request: Request, track_name: str):
     """Starts recording a track using the filter service client."""
-    sv: StateVars = request.state.vars
+    sv: StateVars = request.state.sv
     if sv.line_recording is not None:
         return {"error": "Line recording already in progress"}
 
@@ -74,7 +74,7 @@ async def start_recording(request: Request, track_name: str):
 
 @router.post("/line/end_creation")
 async def end_creation(request: Request):
-    sv: StateVars = request.state.vars
+    sv: StateVars = request.state.sv
     sv.line_recording = None
     sv.turn_calibrating = False
 
@@ -84,7 +84,7 @@ async def end_creation(request: Request):
 async def stop_recording(request: Request):
     """Stops the recording process."""
 
-    sv: StateVars = request.state.vars
+    sv: StateVars = request.state.sv
     if not sv.line_recording:
         return {"error": "No recording in progress."}
 
@@ -95,7 +95,7 @@ async def stop_recording(request: Request):
 
 @router.post("/line/calibrate_turn/start")
 async def calibrate_turn(request: Request):
-    sv: StateVars = request.state.vars
+    sv: StateVars = request.state.sv
     if sv.turn_calibrating:
         return {"error": "Turn calibration is already active"}
     filter_client = request.state.event_manager.clients["filter"]
@@ -107,7 +107,7 @@ async def calibrate_turn(request: Request):
 
 @router.post("/line/calibrate_turn/segment")
 async def add_turn_segment(request: Request):
-    sv: StateVars = request.state.vars
+    sv: StateVars = request.state.sv
     if not sv.turn_calibrating:
         return {"error": "Turn calibration is not active."}
     sv.turn_calibration_segments += 1
@@ -115,7 +115,7 @@ async def add_turn_segment(request: Request):
 
 @router.post("/line/calibrate_turn/end")
 async def end_turn_calibration(request: Request):
-    sv: StateVars = request.state.vars
+    sv: StateVars = request.state.sv
     if not sv.turn_calibrating:
         return {"error": "Turn calibration is not active"}
     filter_client = request.state.event_manager.clients["filter"]
@@ -165,7 +165,7 @@ async def follow_line(
     data: LineFollowData,
     background_tasks: BackgroundTasks,
 ):
-    sv: StateVars = request.state.vars
+    sv: StateVars = request.state.sv
     if sv.following_track:
         return {"error": "Line is currently being followed"}
 
