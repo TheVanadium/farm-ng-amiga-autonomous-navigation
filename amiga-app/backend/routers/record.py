@@ -18,7 +18,7 @@ async def start_recording(
     request: Request, track_name: str, background_tasks: BackgroundTasks
 ):
     """Starts recording a track using the filter service client."""
-    sv: StateVars = request.state.vars
+    sv: StateVars = request.state.sv
     recording_active = sv.track_recording
     if recording_active:
         return {"error": "recording is already active"}
@@ -34,7 +34,7 @@ async def start_recording(
 
 async def record_track(request: Request, track_name: str, output_dir: Path) -> None:
     """Runs the filter service client to record a track."""
-    sv: StateVars = request.state.vars
+    sv: StateVars = request.state.sv
     sv.track_recording = True
 
     # Ensure output directory exists
@@ -70,7 +70,7 @@ async def record_track(request: Request, track_name: str, output_dir: Path) -> N
 @router.post("/record/stop")
 async def stop_recording(request: Request):
     """Stops the recording process."""
-    sv: StateVars = request.state.vars
+    sv: StateVars = request.state.sv
     recording_active = sv.track_recording
     if not recording_active:
         return {"message": "No recording in progress."}

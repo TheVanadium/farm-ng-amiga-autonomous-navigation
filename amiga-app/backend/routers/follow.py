@@ -80,7 +80,7 @@ async def resume_following(request: Request):
 async def stop_following(request: Request):
     """Instructs the robot to stop track following."""
     event_manager = request.state.event_manager
-    sv: StateVars = request.state.vars
+    sv: StateVars = request.state.sv
     client = event_manager.clients["track_follower"]
     try:
         await client.request_reply("/cancel", Empty()), 0.5
