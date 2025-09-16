@@ -15,6 +15,7 @@ def gen_stats(base_path="."):
   for path, _, files in os.walk(base_path):
     for name in files:
       if not name.endswith(".py"): continue
+      if any(s in path.replace('\\', '/') for s in ['tests']): continue
       filepath = os.path.join(path, name)
       relfilepath = os.path.relpath(filepath, base_path).replace('\\', '/')
       with tokenize.open(filepath) as file_:
