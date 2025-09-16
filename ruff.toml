@@ -36,5 +36,6 @@ lint.select = [
 line-length = 150
 
 exclude = [
-  "cameraBackend"
+  "backend/cameraBackend",
+  "multi-cam-calibration"
 ]
