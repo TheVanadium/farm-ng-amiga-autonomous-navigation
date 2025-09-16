@@ -1,11 +1,7 @@
 name: Set Up Amiga App
 on:
   push:
-    paths:
-      - amiga-app/**
   pull_request:
-    paths:
-      - amiga-app/**
 
 jobs:
   build_frontend:
@@ -25,12 +21,11 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            amiga-app/node_modules
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('amiga-app/**/package-lock.json') }}
+            node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
 
       - name: Build
         run: |
-          cd amiga-app
           chmod +x ./build.sh
           ./build.sh
 
@@ -38,7 +33,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: frontend-dist
-          path: amiga-app/ts/dist
+          path: ts/dist
 
   setup_frontend:
     name: Serve & Ping Frontend
@@ -49,14 +44,14 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: frontend-dist
-          path: amiga-app/ts/dist
+          path: ts/dist
 
       - name: Install http-server
-        run: npm install --prefix amiga-app http-server
+        run: npm install http-server
 
       - name: Serve build and ping
         run: |
-          cd amiga-app/ts/dist
+          cd ts/dist
           npx http-server -p 8080 > /dev/null 2>&1 &
           SERVER_PID=$!
           for i in {1..10}; do
@@ -81,7 +76,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: frontend-dist
-          path: amiga-app/ts/dist
+          path: ts/dist
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -92,11 +87,10 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('amiga-app/backend/requirements.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
 
       - name: Install packages
         run: |
-          cd amiga-app
           python3 -m venv .venv
           source .venv/bin/activate
           pip install --upgrade pip
@@ -105,11 +99,10 @@ jobs:
 
       - name: Mock manifest
         run: |
-          cd amiga-app/
           echo '{
             "services": {
               "example-app": {
-                "name": "amiga-app",
+                "name": "farm-ng-amiga-autonomus-navigation",
                 "type": "app",
                 "args": [
                   "--config /opt/farmng/config.json", "--port 8042"
@@ -123,7 +116,7 @@ jobs:
 
       - name: "Run backend"
         run: |
-          cd amiga-app/backend
+          cd backend
           source ../.venv/bin/activate
           echo "Running with flags: ${{ matrix.mode }} --config config.json"
           python3 main.py ${{ matrix.mode }} --config config.json &

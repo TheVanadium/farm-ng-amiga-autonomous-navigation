@@ -24,11 +24,6 @@ First, clone the repository:
 git clone https://github.com/TheVanadium/farm-ng-amiga-autonomous-navigation.git
 ```
 
-The app lives in the directory `amiga-app`
-```bash
-cd amiga-app
-```
-
 #### Frontend
 ```bash
 cd ts
