@@ -3,9 +3,11 @@ on:
   push:
     paths:
       - 'backend/**'
+      - '!backend/sz.py'
   pull_request:
     paths:
       - 'backend/**'
+      - '!backend/sz.py'
 jobs:
   test:
     name: Tests
