@@ -24,19 +24,16 @@ oak_manager: Optional[Process] = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[dict, None]:
-    services = await setup_services(args=cli_args, camera_msg_queue=Queue())
+    services = await setup_services(args=cli_args)
     yield services
 
     if services["oak_manager"] is not None:
         services["oak_manager"].terminate() # type: ignore[unreachable]
         services["oak_manager"].join()
 
-
-async def setup_services(args: argparse.Namespace, camera_msg_queue: Queue, no_cameras: bool = False) -> dict[str, Any]:
-    # config with all the configs
+async def setup_services(args: argparse.Namespace) -> dict[str, Any]:
+    # config with all the configs, then filter out services to pass to the events client manager
     base_config_list: EventServiceConfigList = proto_from_json_file(args.config, EventServiceConfigList())
-
-    # filter out services to pass to the events client manager
     service_config_list = EventServiceConfigList()
     for cfg in base_config_list.configs:
         if cfg.port == 0: continue
@@ -44,10 +41,9 @@ async def setup_services(args: argparse.Namespace, camera_msg_queue: Queue, no_c
 
     event_manager = EventClientSubscriptionManager(config_list=service_config_list)
 
-    if no_cameras: oak_manager = None
-    else:
-        oak_manager = Process(target=startCameras,args=(camera_msg_queue, config.POINTCLOUD_DATA_DIR),daemon=True)
-        oak_manager.start()
+    camera_msg_queue: Queue = Queue()
+    oak_manager = Process(target=startCameras,args=(camera_msg_queue, config.POINTCLOUD_DATA_DIR),daemon=True)
+    oak_manager.start()
 
     asyncio.create_task(event_manager.update_subscriptions())
 
