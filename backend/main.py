@@ -14,7 +14,7 @@ from farm_ng.core.uri_pb2 import Uri
 from farm_ng.core.events_file_reader import proto_from_json_file
 from google.protobuf.json_format import MessageToJson  # type: ignore
 import uvicorn, config
-from routers import tracks, record, follow, linefollow, pointcloud
+from routers import tracks, record, follow, linefollow
 from cameraBackend.oakManager import startCameras
 from typing import AsyncGenerator, Any, Optional
 
@@ -65,7 +65,6 @@ app.include_router(tracks.router)
 app.include_router(record.router)
 app.include_router(follow.router)
 app.include_router(linefollow.router)
-app.include_router(pointcloud.router)
 
 
 # not sure why params are necessary but won't touch it in case the robot complains
