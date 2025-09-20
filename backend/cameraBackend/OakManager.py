@@ -9,17 +9,14 @@ from cameraBackend.pointCloudCompression import compress_pcd
 from config import POINTCLOUD_DATA_DIR
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-# Last digit of ip identifies the camera
-# 0 = Oak0, etc
-# STREAM_PORT_BASE + last 2 digits of ip identifies the port for streaming
-STREAM_PORT_BASE: str = "50"
-PIPELINE_FPS: int = 30
-VIDEO_FPS: int = 20
-
 class OakManager:
-    def __init__(self, queue: Queue = Queue(), cameras: List[Camera] = []) -> None:
+    def __init__(self, queue: Queue = Queue(), cameras: List[Camera] = [], stream_port_base: str = "50", pipeline_fps: int = 30,
+                 video_fps: int = 20) -> None:
         self.queue = queue
         self.cameras = cameras
+        self.STREAM_PORT_BASE = stream_port_base
+        self.PIPELINE_FPS = pipeline_fps
+        self.VIDEO_FPS = video_fps
         self.process = Process(target=self.startCameras, daemon=True)
         self.process.start()
 
@@ -35,8 +32,8 @@ class OakManager:
         for device_info in device_infos:
             if device_info.name == "10.95.76.10": continue # this ip is oak0, which we aren't using
             print(f"Initializing camera {device_info.name}")
-            port = int(STREAM_PORT_BASE + device_info.name[-2:])
-            try: self.cameras.append(Camera(device_info, port, PIPELINE_FPS, VIDEO_FPS))
+            port = int(self.STREAM_PORT_BASE + device_info.name[-2:])
+            try: self.cameras.append(Camera(device_info, port, self.PIPELINE_FPS, self.VIDEO_FPS))
             except Exception as e: print(f"Failed to initialize camera {device_info.name}: {e}")
             sleep(2)  # BUG: problem with DepthAI? Can't initialize cameras all at once
         while True:
