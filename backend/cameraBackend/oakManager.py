@@ -2,10 +2,11 @@ from multiprocessing import Queue
 import signal, sys, os
 from queue import Empty
 from time import sleep
-from typing import List
+from typing import List=
 import depthai as dai
 from cameraBackend.camera import Camera
-from cameraBackend.pointCloud import PointCloudFusion
+from cameraBackend.pointCloudCompression import compress_pcd
+from config import POINTCLOUD_DATA_DIR
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Last digit of ip identifies the camera
@@ -17,7 +18,7 @@ PIPELINE_FPS: int = 30
 VIDEO_FPS: int = 20
 
 
-def startCameras(queue: Queue, POINTCLOUD_DATA_DIR: str) -> None:
+def startCameras(queue: Queue) -> None:
     """
     Initialize DepthAI cameras, set up point‐cloud fusion, and listen for control
     commands using a multiprocessing queue.
@@ -66,20 +67,22 @@ def startCameras(queue: Queue, POINTCLOUD_DATA_DIR: str) -> None:
         try: cameras.append(Camera(device_info, port, PIPELINE_FPS, VIDEO_FPS))
         except Exception as e: print(f"Failed to initialize camera {device_info.name}: {e}")
         sleep(2)  # BUG: problem with DepthAI? Can't initialize cameras all at once
-    pointCloudFusion = PointCloudFusion(cameras, POINTCLOUD_DATA_DIR)
     if queue == None: return
     while True:
         if os.getppid() == 1: sys.exit(1) # 1 means parent is gone
         try:
             msg = queue.get(timeout=0.1)  # Blocking
             action = msg.get("action", "No action")
-            match action:
-                case "align_point_clouds": pointCloudFusion.align_point_clouds()
-                case "reset_alignment": pointCloudFusion.reset_alignment()
-                case "save_point_cloud":
-                    line_name = msg.get("line_name", "X")
-                    row_number = msg.get("row_number", "X")
-                    capture_number = msg.get("capture_number", "X")
-                    pointCloudFusion.save_point_cloud(line_name, row_number, capture_number)
-                case _: print(f"Unknown message: {msg}")
+            if action is not "save_point_cloud":
+                print(f"Unknown message: {msg}")
+                continue
+            line_name = msg.get("line_name", "X")
+            row_number = msg.get("row_number", "X")
+            capture_number = msg.get("capture_number", "X")
+            path = f"{POINTCLOUD_DATA_DIR}/{line_name}/row_{row_number}/capture_{capture_number}"
+            if not os.path.exists(path): os.makedirs(path)
+            for i, camera in enumerate(cameras):
+                camera.update()
+                camera_path = f"{path}/camera-{i}.drc"
+                with open(camera_path, "wb") as f: f.write(compress_pcd(camera.point_cloud))
         except Empty: continue
