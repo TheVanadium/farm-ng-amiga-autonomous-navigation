@@ -255,7 +255,7 @@ async def follow_line(
     background_tasks.add_task(
         handle_image_capture,
         sv,
-        request.state.camera_msg_queue,
+        request.state.oak_manager.queue,
         track_client,
         line_name,
         row_indices,
