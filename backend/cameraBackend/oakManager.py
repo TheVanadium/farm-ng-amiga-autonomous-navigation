@@ -2,7 +2,7 @@ from multiprocessing import Queue
 import signal, sys, os
 from queue import Empty
 from time import sleep
-from typing import List
+from typing import List=
 import depthai as dai
 from cameraBackend.camera import Camera
 from cameraBackend.pointCloudCompression import compress_pcd
