@@ -14,7 +14,7 @@ from farm_ng.core.events_file_reader import proto_from_json_file
 from google.protobuf.json_format import MessageToJson  # type: ignore
 import uvicorn, config
 from routers import tracks, record, follow, linefollow
-from cameraBackend.OakManager import OakManager
+from OakManager import OakManager
 from typing import AsyncGenerator, Any, Optional
 
 global oak_manager

@@ -1,25 +1,13 @@
-# Modified code from
-# https://github.com/luxonis/depthai-experiments/blob/master/gen2-multiple-devices/rgbd-pointcloud-fusion/camera.py
-# https://github.com/luxonis/depthai-python/blob/main/examples/ToF/tof_depth.py
-
-import sys
-import os
-import time
+from multiprocessing import Queue, Process
+import signal, sys, os, threading, cv2, DracoPy
+import numpy as np, open3d as o3d, depthai as dai
+from queue import Empty
+from time import sleep
+from typing import List, Optional
 from datetime import timedelta
-import datetime
-import threading
-
+from config import POINTCLOUD_DATA_DIR, CALIBRATION_DATA_DIR, PORT
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
-import cv2
-import depthai as dai
-import numpy as np
-import open3d as o3d
-
-from config import CALIBRATION_DATA_DIR
-from config import PORT
-
 
 class Camera:
     """
@@ -64,8 +52,6 @@ class Camera:
             Non-blocking queues for frames.
         server_stream_queue (multiprocessing.Queue):
             IPC queue feeding the streaming server.
-        _sync_queue (SyncQueue):
-            Helper to synchronize depth + image pairs.
         _image_frame (ndarray):
             Latest RGB frame.
         _depth_frame (ndarray):
@@ -124,7 +110,7 @@ class Camera:
         print("=== Connected to " + self._device_info.name)
 
         # Start streams as seperate thread
-        self._http_streaming_server = None
+        self._http_streaming_server: Optional[ThreadingHTTPServer] = None
         self.streamingServerThread = threading.Thread(
             target=self.start_streaming_server, daemon=True
         )
@@ -143,7 +129,7 @@ class Camera:
     def __del__(self):
         try:
             self.shutdown()
-        except:
+        except Exception:
             return
 
     def _load_calibration(self):
@@ -153,34 +139,19 @@ class Camera:
             self.cam_to_world = extrinsics["cam_to_world"]
             self.world_to_cam = extrinsics["world_to_cam"]
             print(f"Calibration data for camera {self._camera_ip} loaded successfully.")
-        except:
+        except Exception:
             # TODO: figure out how to handle b/c calibration data is mandatory
             # raise RuntimeError(f"Could not load calibration data for camera {self.camera_ip} from {path}!")
             print(
                 f"ERROR: No extrinsic calibration data for camera {self._camera_ip} found."
             )
 
-        # calibration = self._device.readCalibration()
-        # intrinsics = calibration.getCameraIntrinsics(
-        #     # TODO: Figure out if this is the correct socket
-        #     dai.CameraBoardSocket.CAM_C,
-        #     dai.Size2f(*self.image_size),  # type: ignore
-        # )
-
-        # self.pinhole_camera_intrinsic = o3d.camera.PinholeCameraIntrinsic(
-        #     *self.image_size,
-        #     intrinsics[0][0],
-        #     intrinsics[1][1],
-        #     intrinsics[0][2],
-        #     intrinsics[1][2],
-        # )
-
         try:
             self.alignment = np.load(
                 f"{CALIBRATION_DATA_DIR}/alignment_{self._camera_ip}.npy"
             )
             print(f"Alignment data for camera {self._camera_ip} loaded successfully.")
-        except:
+        except Exception:
             print(f"WARNING: No alignment data for camera {self._camera_ip} found.")
             self.alignment = np.eye(4)  # Default to no alignment correction
 
@@ -262,78 +233,17 @@ class Camera:
         video_enc.setQuality(50)
         camRgb.video.link(video_enc.input)
 
-        #
-        # # Time‐of‐flight / depth pipeline
-        # tof = pipeline.create(dai.node.ToF)
-        # # Apply ToF settings
-        # cfg = tof.initialConfig.get()
-        # cfg.enableOpticalCorrection = True
-        # cfg.enablePhaseShuffleTemporalFilter = True
-        # cfg.phaseUnwrappingLevel = 1
-        # cfg.phaseUnwrapErrorThreshold = 200
-        #
-        # # Create ToF config
-        # xin_tof_cfg = pipeline.create(dai.node.XLinkIn)
-        # xin_tof_cfg.setStreamName("tofConfig")
-        #
-        #
-        # xin_tof_cfg.out.link(tof.inputConfig)
-        #
-        # tof.initialConfig.set(cfg)
-        #
-        # # Raw ToF camera feed
-        # cam_tof = pipeline.create(dai.node.Camera)
-        # cam_tof.setBoardSocket(dai.CameraBoardSocket.CAM_A)
-        # cam_tof.setFps(self.PIPELINE_FPS * 2)  # ToF outputs at half this rate
-        # cam_tof.raw.link(tof.input)
-        #
-        # # ToF to depth output
-        # xout_depth = pipeline.create(dai.node.XLinkOut)
-        # xout_depth.setStreamName("depth")
-        # tof.depth.link(xout_depth.input)
-        #
-        # # RGB camera
-        # # cam_rgb = pipeline.createColorCamera()
-        # cam_rgb = pipeline.create(dai.node.ColorCamera)
-        # cam_rgb.setBoardSocket(dai.CameraBoardSocket.CAM_C)
-        # cam_rgb.setResolution(dai.ColorCameraProperties.SensorResolution.THE_800_P)
-        # cam_rgb.setColorOrder(dai.ColorCameraProperties.ColorOrder.RGB)
-        # cam_rgb.setIspScale(1, 2)
-        # cam_rgb.setFps(self.PIPELINE_FPS)
-        # cam_rgb.setVideoSize(640, 400)
-        #
-        # # RGB image outputs
-        # xout_image = pipeline.createXLinkOut()
-        # xout_image.setStreamName("image")
-        # cam_rgb.isp.link(xout_image.input)
-        # camRgb.video.link(video_enc.input)
-
-        # self.image_size = cam_rgb.getIspSize()
         self.image_size = camRgb.getIspSize()
         self.pipeline = pipeline
 
     def update(self):
-        # for queue in [self._depth_queue, self._image_queue]:
-        #     new_frames = queue.tryGetAll()
-        #     if new_frames is not None:
-        #         for new_frame in new_frames:
-        #             self._sync_queue.add(queue.getName(), new_frame)
-        #
-        # frame_sync = self._sync_queue.get()
-        # if frame_sync is None:
-        #     return
-        #
-        # self._depth_frame = frame_sync["depth"].getFrame()
-        # self._image_frame = frame_sync["image"].getCvFrame()
-        # rgb = cv2.cvtColor(self._image_frame, cv2.COLOR_BGR2RGB)
-        # self._rgbd_to_point_cloud(self._depth_frame, rgb)
-
+        # we need to type iignore this because depthAI's output queue is generic and thus ambiguous
         output_packet = self.output_queue.get()
 
-        rgb = cv2.cvtColor(output_packet["bgr"].getCvFrame(), cv2.COLOR_BGR2RGB)
+        rgb = cv2.cvtColor(output_packet["bgr"].getCvFrame(), cv2.COLOR_BGR2RGB) # type: ignore
         colors = rgb.reshape(-1, 3).astype(np.float64) / 255.0
 
-        raw_points = output_packet["pcl"].getPoints().astype(np.float64)
+        raw_points = output_packet["pcl"].getPoints().astype(np.float64) # type: ignore
 
         # R = rotation matrix , t = translation vector
         R, t = self.transform_matrix[:3, :3], self.transform_matrix[:3, 3]
@@ -341,47 +251,6 @@ class Camera:
 
         self.point_cloud.points = o3d.utility.Vector3dVector(transformed_points)
         self.point_cloud.colors = o3d.utility.Vector3dVector(colors)
-
-    # def _rgbd_to_point_cloud(
-    #     self, depth_frame, image_frame, downsample=False, remove_noise=False
-    # ):
-    #     depth_frame = depth_frame[:400, :]  # TODO: Check if this is correct
-    #     rgb_o3d = o3d.geometry.Image(image_frame)
-    #     df = np.copy(depth_frame).astype(np.float32)
-    #     # df -= 20
-    #     depth_o3d = o3d.geometry.Image(df)
-    #     rgbd_image = o3d.geometry.RGBDImage.create_from_color_and_depth(
-    #         rgb_o3d, depth_o3d, convert_rgb_to_intensity=(len(image_frame.shape) != 3)
-    #     )
-    #
-    #     point_cloud = o3d.geometry.PointCloud.create_from_rgbd_image(
-    #         rgbd_image, self.pinhole_camera_intrinsic, self.world_to_cam
-    #     )
-    #
-    #     print(depth_frame)
-    #     print(rgb_o3d)
-    #     print(len(point_cloud.points))
-    #
-    #     if downsample:
-    #         point_cloud = point_cloud.voxel_down_sample(voxel_size=0.01)
-    #
-    #     if remove_noise:
-    #         point_cloud = point_cloud.remove_statistical_outlier(
-    #             nb_neighbors=30, std_ratio=0.1
-    #         )[0]
-    #
-    #     self.point_cloud.points = point_cloud.points
-    #     self.point_cloud.colors = point_cloud.colors
-    #
-    #     # correct upside down z axis
-    #     T = np.eye(4)
-    #     T[2, 2] = -1
-    #     self.point_cloud.transform(T)
-    #
-    #     # apply point cloud alignment transform
-    #     self.point_cloud.transform(self.alignment)
-    #
-    #     return self.point_cloud
 
     def make_handler(self, frame_queue: dai.DataOutputQueue):
         class MJPEGHandler(BaseHTTPRequestHandler):
@@ -435,3 +304,89 @@ class Camera:
         self._http_streaming_server.serve_forever()
         self._http_streaming_server.server_close()
         print(f"RGB stream at 127.0.0.1:{self.stream_port} stopped")
+
+
+def compress_pcd(pcd: o3d.geometry.PointCloud) -> bytes:
+    """Compresses an open3d PointCloud with Draco
+
+    Args:
+        pcd (o3d.geometry.PointCloud): The point cloud to compress.
+
+    Returns:
+        bytes: The compressed point cloud in Draco format.
+    """
+
+    points = np.asarray(pcd.points, dtype=np.float32)
+    colors = (np.asarray(pcd.colors) * 255).astype(np.uint8)
+    return DracoPy.encode(points, colors=colors)
+
+
+def decompress_drc(draco_binary: bytes) -> o3d.geometry.PointCloud:
+    """Decompresses a Draco binary to an open3d PointCloud
+    Args:
+        draco_binary (bytes): The compressed point cloud in Draco format.
+
+    Returns:
+        o3d.geometry.PointCloud: The decompressed point cloud.
+
+    Raises:
+        ValueError: If the binary does not contain points or colors when
+            decoded with DracoPy.
+    """
+    decoded_drc = DracoPy.decode(draco_binary)
+    if not hasattr(decoded_drc, "points"):
+        raise ValueError("Input missing points")
+    if not hasattr(decoded_drc, "colors"):
+        raise ValueError("Input missing colors")
+
+    decompressed_points = o3d.utility.Vector3dVector(np.asarray(decoded_drc.points))
+    decompressed_colors = o3d.utility.Vector3dVector(
+        np.asarray(decoded_drc.colors) / 255
+    )
+
+    decompressed_pcd = o3d.geometry.PointCloud(decompressed_points)
+    decompressed_pcd.colors = decompressed_colors
+    return decompressed_pcd
+
+class OakManager:
+    def __init__(self, queue: Queue = Queue(), cameras: List[Camera] = [], stream_port_base: str = "50", pipeline_fps: int = 30,
+                 video_fps: int = 20) -> None:
+        self.queue, self.cameras = queue, cameras
+        self.STREAM_PORT_BASE, self.PIPELINE_FPS, self.VIDEO_FPS = stream_port_base, pipeline_fps, video_fps
+
+        device_infos = dai.Device.getAllAvailableDevices()
+        print(f"Found {len(device_infos)} devices: {[device_info.name for device_info in device_infos]}")
+        for device_info in device_infos:
+            if device_info.name == "10.95.76.10": continue # this ip is oak0, which we aren't using
+            print(f"Initializing camera {device_info.name}")
+            port = int(self.STREAM_PORT_BASE + device_info.name[-2:]) # this is how our cameras happen to be named
+            try: self.cameras.append(Camera(device_info, port, self.PIPELINE_FPS, self.VIDEO_FPS))
+            except Exception as e: print(f"Failed to initialize camera {device_info.name}: {e}")
+            sleep(2)  # BUG: problem with DepthAI? Can't initialize cameras all at once
+
+        self.process = Process(target=self.startCameras, daemon=True)
+        self.process.start()
+
+    def startCameras(self) -> None:
+        def handle_sigterm(signum, frame) -> None:
+            print("Received SIGTERM, stopping oak manager")
+            for camera in self.cameras: camera.shutdown()
+            sys.exit(0)
+        signal.signal(signal.SIGTERM, handle_sigterm)
+        while True:
+            if os.getppid() == 1: sys.exit(1) # 1 means parent is gone
+            try: msg = self.queue.get(timeout=0.1)  # Blocking
+            except Empty: continue
+            action = msg.get("action", "No action")
+            if action != "save_point_cloud":
+                print(f"Unknown message: {msg}")
+                continue
+            line_name = msg.get("line_name", "X")
+            row_number = msg.get("row_number", "X")
+            capture_number = msg.get("capture_number", "X")
+            path = f"{POINTCLOUD_DATA_DIR}/{line_name}/row_{row_number}/capture_{capture_number}"
+            if not os.path.exists(path): os.makedirs(path)
+            for i, camera in enumerate(self.cameras):
+                camera.update()
+                camera_path = f"{path}/camera-{i}.drc"
+                with open(camera_path, "wb") as f: f.write(compress_pcd(camera.point_cloud))
