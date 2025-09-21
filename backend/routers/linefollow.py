@@ -31,6 +31,8 @@ from pathlib import Path
 from backend.config import LINES_DIR, POINTCLOUD_DATA_DIR, StateVars
 from backend.robot_utils import walk_towards, format_track
 
+from OakManager import OakManager
+
 router = APIRouter()
 
 
@@ -255,7 +257,7 @@ async def follow_line(
     background_tasks.add_task(
         handle_image_capture,
         sv,
-        request.state.oak_manager.queue,
+        request.state.oak_manager,
         track_client,
         line_name,
         row_indices,
@@ -266,7 +268,7 @@ async def follow_line(
 
 async def handle_image_capture(
     sv: StateVars,
-    camera_msg_queue: Queue,
+    oak_manager: OakManager,
     client: EventClient,
     line_name: str,
     row_indices: list[tuple[int, int]],
@@ -333,7 +335,7 @@ async def handle_image_capture(
                     last_image_capture = dist_remaining
                     await client.request_reply("/pause", Empty())
                     await capture_image(
-                        camera_msg_queue,
+                        oak_manager,
                         line_name,
                         current_row_number,
                         capture_number,
@@ -344,7 +346,7 @@ async def handle_image_capture(
 
 
 async def capture_image(
-    camera_msg_queue: Queue, line_name: str, row_number: int, capture_number: int
+    oak_manager: OakManager, line_name: str, row_number: int, capture_number: int
 ):
     msg = {
         "action": "save_point_cloud",
@@ -353,7 +355,7 @@ async def capture_image(
         "capture_number": capture_number,
     }
 
-    camera_msg_queue.put(msg)
+    oak_manager.queue_msg(msg)
 
     # Pause the robot in place to mitigate motion blur or account for camera latency
     capture_pause_time: float = 1.2

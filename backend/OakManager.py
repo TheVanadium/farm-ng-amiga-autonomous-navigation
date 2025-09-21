@@ -8,6 +8,7 @@ from datetime import timedelta
 from config import POINTCLOUD_DATA_DIR, CALIBRATION_DATA_DIR, PORT
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
+from datetime import datetime
 
 class Camera:
     """
@@ -354,7 +355,9 @@ def decompress_drc(draco_binary: bytes) -> o3d.geometry.PointCloud:
 
 class OakManager:
     def __init__(self, stream_port_base: str = "50", pipeline_fps: int = 30, video_fps: int = 20) -> None:
-        self.queue: Queue = Queue()
+        self._queue: Queue = Queue()
+        now = datetime.now().strftime("%y_%m_%d_%H_%M_%S")
+        self._log = open(f"logs/oak_manager/{now}.log", "a")
         self._cameras: List[Camera] = []
 
         device_infos = dai.Device.getAllAvailableDevices()
@@ -370,6 +373,10 @@ class OakManager:
         self.process = Process(target=self.startCameras, daemon=True)
         self.process.start()
 
+    def queue_msg(self, msg: dict) -> None:
+        self._queue.put(msg)
+        self._log.write(f"{datetime.now().strftime('%y_%m_%d_%H_%M_%S')} - Queued message: {msg}\n")
+
     def startCameras(self) -> None:
         def handle_sigterm(signum, frame) -> None:
             print("Received SIGTERM, stopping oak manager")
@@ -378,7 +385,7 @@ class OakManager:
         signal.signal(signal.SIGTERM, handle_sigterm)
         while True:
             if os.getppid() == 1: sys.exit(1) # 1 means parent is gone
-            try: self._handle_msg(self.queue.get(timeout=0.1))  # Blocking
+            try: self._handle_msg(self._queue.get(timeout=0.1))  # Blocking
             except Empty: continue
 
     def _handle_msg(self, msg: dict) -> None:
