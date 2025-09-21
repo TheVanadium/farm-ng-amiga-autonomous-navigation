@@ -241,7 +241,7 @@ class Camera:
         self.pipeline = pipeline
 
     def update(self):
-        # we need to type iignore this because depthAI's output queue is generic and thus ambiguous
+        # we need to type ignore this because depthAI's output queue is generic and thus ambiguous
         output_packet = self.output_queue.get()
 
         rgb = cv2.cvtColor(output_packet["bgr"].getCvFrame(), cv2.COLOR_BGR2RGB) # type: ignore
