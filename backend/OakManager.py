@@ -11,6 +11,10 @@ from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
 class Camera:
     """
+    Modified code from
+    https://github.com/luxonis/depthai-experiments/blob/master/gen2-multiple-devices/rgbd-pointcloud-fusion/camera.py
+    https://github.com/luxonis/depthai-python/blob/main/examples/ToF/tof_depth.py
+
     Manages a DepthAI camera device, captures RGB-D point clouds, and hosts
     an HTTP MJPEG stream.
 
