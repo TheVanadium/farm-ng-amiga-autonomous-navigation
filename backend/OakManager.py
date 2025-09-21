@@ -380,16 +380,19 @@ class OakManager:
             if os.getppid() == 1: sys.exit(1) # 1 means parent is gone
             try: msg = self.queue.get(timeout=0.1)  # Blocking
             except Empty: continue
-            action = msg.get("action", "No action")
-            if action != "save_point_cloud":
-                print(f"Unknown message: {msg}")
-                continue
-            line_name = msg.get("line_name", "X")
-            row_number = msg.get("row_number", "X")
-            capture_number = msg.get("capture_number", "X")
-            path = f"{POINTCLOUD_DATA_DIR}/{line_name}/row_{row_number}/capture_{capture_number}"
-            if not os.path.exists(path): os.makedirs(path)
-            for i, camera in enumerate(self._cameras):
-                camera.update()
-                camera_path = f"{path}/camera-{i}.drc"
-                with open(camera_path, "wb") as f: f.write(compress_pcd(camera.point_cloud))
+            self._handle_msg(msg)
+
+    def _handle_msg(self, msg: dict) -> None:
+        action = msg.get("action", "No action")
+        if action != "save_point_cloud":
+            print(f"Unknown message: {msg}")
+            return
+        line_name = msg.get("line_name", "X")
+        row_number = msg.get("row_number", "X")
+        capture_number = msg.get("capture_number", "X")
+        path = f"{POINTCLOUD_DATA_DIR}/{line_name}/row_{row_number}/capture_{capture_number}"
+        if not os.path.exists(path): os.makedirs(path)
+        for i, camera in enumerate(self._cameras):
+            camera.update()
+            camera_path = f"{path}/camera-{i}.drc"
+            with open(camera_path, "wb") as f: f.write(compress_pcd(camera.point_cloud))
