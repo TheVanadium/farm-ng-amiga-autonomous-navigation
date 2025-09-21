@@ -376,7 +376,7 @@ class OakManager:
 
     def queue_msg(self, msg: dict) -> None:
         self._queue.put(msg)
-        self._log.write(f"QUEUED MSG: {msg}\n")
+        self._log.write(f"{datetime.now().strftime('%y_%m_%d_%H_%M_%S')} - Queued message: {msg}\n")
 
     def _startCameras(self) -> None:
         def handle_sigterm(signum, frame) -> None:
