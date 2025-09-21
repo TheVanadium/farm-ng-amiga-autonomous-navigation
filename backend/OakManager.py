@@ -356,10 +356,11 @@ def decompress_drc(draco_binary: bytes) -> o3d.geometry.PointCloud:
 class OakManager:
     def __init__(self, stream_port_base: str = "50", pipeline_fps: int = 30, video_fps: int = 20) -> None:
         self._queue: Queue = Queue()
+
         now = datetime.now().strftime("%y_%m_%d_%H_%M_%S")
         self._log = open(f"logs/oak_manager/{now}.log", "a")
-        self._cameras: List[Camera] = []
 
+        self._cameras: List[Camera] = []
         device_infos = dai.Device.getAllAvailableDevices()
         print(f"Found {len(device_infos)} devices: {[device_info.name for device_info in device_infos]}")
         for device_info in device_infos:
@@ -375,7 +376,7 @@ class OakManager:
 
     def queue_msg(self, msg: dict) -> None:
         self._queue.put(msg)
-        self._log.write(f"{datetime.now().strftime('%y_%m_%d_%H_%M_%S')} - Queued message: {msg}\n")
+        self._log.write(f"QUEUED MSG: {msg}\n")
 
     def _startCameras(self) -> None:
         def handle_sigterm(signum, frame) -> None:
@@ -385,8 +386,8 @@ class OakManager:
         signal.signal(signal.SIGTERM, handle_sigterm)
         while True:
             if os.getppid() == 1: sys.exit(1) # 1 means parent is gone
-            try: self._handle_msg(self._queue.get(timeout=0.1))  # Blocking
-            except Empty: continue
+            try: self._handle_msg(self._queue.get(timeout=0.1)) # Blocking
+            except Empty: pass
 
     def _handle_msg(self, msg: dict) -> None:
         action = msg.get("action", "No action")
