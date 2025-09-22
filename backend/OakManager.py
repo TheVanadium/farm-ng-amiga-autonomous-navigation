@@ -366,7 +366,6 @@ class OakManager:
         print(f"Found {len(device_infos)} devices: {[device_info.name for device_info in device_infos]}")
         for device_info in device_infos:
             if device_info.name == "10.95.76.10": continue # this ip is oak0, which we aren't using
-            print(f"Initializing camera {device_info.name}")
             port = int(stream_port_base + device_info.name[-2:]) # this is how our cameras happen to be named
             try: self._cameras.append(Camera(device_info, port, pipeline_fps, video_fps))
             except Exception as e: print(f"Failed to initialize camera {device_info.name}: {e}")
