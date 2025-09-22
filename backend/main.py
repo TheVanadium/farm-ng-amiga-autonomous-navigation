@@ -67,8 +67,8 @@ app.include_router(linefollow.router)
 # could use testing
 def handle_sigterm(signum: Any, frame: Any) -> None:
     if oak_manager is not None:
-        oak_manager.process.terminate()
-        oak_manager.process.join()
+        oak_manager.camera_process.terminate()
+        oak_manager.camera_process.join()
     sys.exit(0)
 signal.signal(signal.SIGTERM, handle_sigterm)
 

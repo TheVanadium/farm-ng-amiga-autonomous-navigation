@@ -372,8 +372,8 @@ class OakManager:
             except Exception as e: print(f"Failed to initialize camera {device_info.name}: {e}")
             sleep(2)  # BUG: problem with DepthAI? Can't initialize cameras all at once
 
-        self.process = Process(target=self._start_cameras, daemon=True)
-        self.process.start()
+        self.camera_process = Process(target=self._start_cameras, daemon=True)
+        self.camera_process.start()
 
     def queue_msg(self, msg: dict) -> None:
         self._queue.put(msg)
