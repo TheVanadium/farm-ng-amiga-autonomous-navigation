@@ -358,6 +358,7 @@ class OakManager:
         self._queue: Queue = Queue()
 
         now = datetime.now().strftime("%y_%m_%d_%H_%M_%S")
+        os.makedirs("logs/oak_manager", exist_ok=True)
         self._log = open(f"logs/oak_manager/{now}.log", "a")
 
         self._cameras: List[Camera] = []

@@ -1,6 +1,5 @@
 import asyncio
 import json
-from multiprocessing import Queue
 import os
 
 from farm_ng.core.event_client_manager import EventClient
