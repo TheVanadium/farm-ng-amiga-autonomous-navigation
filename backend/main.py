@@ -27,8 +27,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[dict, None]:
     yield services
 
     if services["oak_manager"] is not None:
-        services["oak_manager"].terminate() # type: ignore[unreachable]
-        services["oak_manager"].join()
+        services["oak_manager"].camera_process.terminate() # type: ignore[unreachable]
+        services["oak_manager"].camera_process.join()
 
 async def setup_services(args: argparse.Namespace) -> dict[str, Any]:
     # config with all the configs, then filter out services to pass to the events client manager

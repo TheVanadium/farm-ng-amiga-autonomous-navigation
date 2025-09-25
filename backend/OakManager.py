@@ -126,15 +126,19 @@ class Camera:
         if self._http_streaming_server:
             print("Shutting down HTTP server...")
             self._http_streaming_server.shutdown()
+            print("HTTP server shut down.")
         if self.streamingServerThread.is_alive():
+            print("Waiting for streaming server thread to terminate...")
             self.streamingServerThread.join(timeout=5)
+            print("Streaming server thread terminated.")
+        print("Closing device...")
         self._device.close()
         print("=== Closed " + self._device_info.name)
 
     def __del__(self):
         try:
             self.shutdown()
-        except Exception:
+        except: # noqa: E722
             return
 
     def _load_calibration(self):
@@ -296,7 +300,7 @@ class Camera:
                         self.wfile.write(boundary + header + frame + b"\r\n")
                         self.wfile.flush()
 
-                except Exception:
+                except: # noqa: E722
                     return
 
         return MJPEGHandler
@@ -354,12 +358,13 @@ def decompress_drc(draco_binary: bytes) -> o3d.geometry.PointCloud:
     return decompressed_pcd
 
 class OakManager:
-    def __init__(self, stream_port_base: str = "50", pipeline_fps: int = 30, video_fps: int = 20) -> None:
+    def __init__(self, log: Optional[str] = None, stream_port_base: str = "50", pipeline_fps: int = 30, video_fps: int = 20) -> None:
         self._queue: Queue = Queue()
 
-        now = datetime.now().strftime("%y_%m_%d_%H_%M_%S")
-        os.makedirs("logs/oak_manager", exist_ok=True)
-        self._log = open(f"logs/oak_manager/{now}.log", "a")
+        if log:
+            now = datetime.now().strftime("%y_%m_%d_%H_%M_%S")
+            os.makedirs("logs/oak_manager", exist_ok=True)
+            self._log = open(f"logs/oak_manager/{now}.log", "a")
 
         self._cameras: List[Camera] = []
         device_infos = dai.Device.getAllAvailableDevices()
@@ -389,6 +394,7 @@ class OakManager:
             try: self._handle_msg(self._queue.get(timeout=0.1)) # Blocking
             except Empty: pass
 
+    # this logic is extracted for future testing
     def _handle_msg(self, msg: dict) -> None:
         action = msg.get("action", "No action")
         if action != "save_point_cloud":
