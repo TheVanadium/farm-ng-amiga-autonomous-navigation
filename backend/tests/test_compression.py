@@ -1,4 +1,4 @@
-from cameraBackend.pointCloudCompression import compress_pcd, decompress_drc
+from OakManager import compress_pcd, decompress_drc
 import open3d
 import unittest
 import os
