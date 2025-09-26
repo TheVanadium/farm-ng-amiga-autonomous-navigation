@@ -2,13 +2,12 @@ from multiprocessing import Queue, Process
 import signal, sys, os, threading, cv2, DracoPy
 import numpy as np, open3d as o3d, depthai as dai
 from queue import Empty
-from time import sleep
+from time import sleep, time
 from typing import List, Optional
-from datetime import timedelta
+from datetime import datetime, timedelta
 from config import POINTCLOUD_DATA_DIR, CALIBRATION_DATA_DIR, PORT
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
-from datetime import datetime
 
 class Camera:
     """
@@ -358,13 +357,14 @@ def decompress_drc(draco_binary: bytes) -> o3d.geometry.PointCloud:
     return decompressed_pcd
 
 class OakManager:
-    def __init__(self, log: Optional[str] = None, stream_port_base: str = "50", pipeline_fps: int = 30, video_fps: int = 20) -> None:
+    def __init__(self, log: bool = True, stream_port_base: str = "50", pipeline_fps: int = 30, video_fps: int = 20) -> None:
         self._queue: Queue = Queue()
 
+        self._start_time = time()
         if log:
-            now = datetime.now().strftime("%y_%m_%d_%H_%M_%S")
             os.makedirs("logs/oak_manager", exist_ok=True)
-            self._log = open(f"logs/oak_manager/{now}.log", "a")
+            self._log = open(f"logs/oak_manager/{datetime.now().isoformat()}.log", "a")
+            self._log.write(f"{datetime.now().isoformat()} - Starting OakManager\n")
 
         self._cameras: List[Camera] = []
         device_infos = dai.Device.getAllAvailableDevices()
@@ -381,7 +381,8 @@ class OakManager:
 
     def queue_msg(self, msg: dict) -> None:
         self._queue.put(msg)
-        self._log.write(f"{datetime.now().strftime('%y_%m_%d_%H_%M_%S')} - Queued message: {msg}\n")
+        self._log.write(f"{time() - self._start_time:.1f} - Queued message: {msg}\n")
+        self._log.flush()
 
     def _start_cameras(self) -> None:
         def handle_sigterm(signum, frame) -> None:
