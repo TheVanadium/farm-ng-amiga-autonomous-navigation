@@ -4,6 +4,7 @@ from queue import Empty
 from time import sleep
 from typing import List
 import depthai as dai
+import cv2
 from cameraBackend.camera import Camera
 from cameraBackend.pointCloudCompression import compress_pcd
 from config import POINTCLOUD_DATA_DIR
@@ -85,4 +86,6 @@ def startCameras(queue: Queue) -> None:
                 camera.update()
                 camera_path = f"{path}/camera-{i}.drc"
                 with open(camera_path, "wb") as f: f.write(compress_pcd(camera.point_cloud))
+                rgb_camera_path = f"{path}/rgb-camera-{i}.png"
+                cv2.imwrite(rgb_camera_path, cv2.cvtColor(camera.bgr_image, cv2.COLOR_BGR2RGB))
         except Empty: continue
