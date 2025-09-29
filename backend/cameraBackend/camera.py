@@ -120,7 +120,7 @@ class Camera:
 
         self.point_cloud = o3d.geometry.PointCloud()
 
-        self.rgb_image: Optional[np.ndarray] = None # Unsure of image size to preallocate
+        self.bgr_image: Optional[np.ndarray] = None # Unsure of image size to preallocate
 
         self._load_calibration()
 
@@ -344,7 +344,7 @@ class Camera:
 
         self.point_cloud.points = o3d.utility.Vector3dVector(transformed_points)
         self.point_cloud.colors = o3d.utility.Vector3dVector(colors)
-        self.rgb_image = rgb
+        self.bgr_image = output_packet["bgr"].getCvFrame()
 
     # def _rgbd_to_point_cloud(
     #     self, depth_frame, image_frame, downsample=False, remove_noise=False
