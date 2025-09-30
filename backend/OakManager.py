@@ -38,46 +38,6 @@ class Camera:
             Frames per second for the pipeline.
         VIDEO_FPS (int):
             Frames per second for the MJPEG stream.
-
-    Attributes:
-        _camera_ip (str):
-            Network address of the camera. Only for identification.
-        stream_port (int):
-            Port for the MJPEG HTTP server.
-        PIPELINE_FPS (int):
-            Pipeline frame rate.
-        VIDEO_FPS (int):
-            Video frame rate.
-        _pipeline (dai.Pipeline):
-            DepthAI pipeline to be uploaded to the camera.
-        _device (dai.Device):
-            Active DepthAI device instance.
-        _image_queue, _depth_queue, _video_queue (dai.Queue):
-            Non-blocking queues for frames.
-        server_stream_queue (multiprocessing.Queue):
-            IPC queue feeding the streaming server.
-        _image_frame (ndarray):
-            Latest RGB frame.
-        _depth_frame (ndarray):
-            Latest depth frame.
-        point_cloud (o3d.geometry.PointCloud):
-            Latest fused point cloud.
-        streamingServer (multiprocessing.Process):
-            Background MJPEG server process.
-
-    Methods:
-        _updateVideoQueue():
-            Callback invoked on new encoded video frames; enqueues raw JPEG bytes
-            into the server_stream_queue for HTTP serving.
-        update():
-            Polls image & depth queues, synchronizes frames, converts to point cloud.
-        _rgbd_to_point_cloud(depth_frame, image_frame, downsample=False, remove_noise=False):
-            Builds an Open3D PointCloud from aligned RGB + depth data with optional
-            voxel-downsampling and denoising.
-        save_point_cloud_alignment():
-            Saves the current 'alignment' matrix to disk for later reuse.
-        shutdown():
-            Gracefully terminates the streaming server process and closes the device.
     """
 
     def __init__(
