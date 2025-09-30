@@ -68,6 +68,7 @@ class Camera:
         )
 
         self.point_cloud = o3d.geometry.PointCloud()
+        self.bgr_image: np.ndarray = np.zeros((1, 1, 3), dtype=np.uint8)
 
         self._load_calibration()
 
@@ -208,7 +209,9 @@ class Camera:
         # we need to type ignore this because depthAI's output queue is generic and thus ambiguous
         output_packet = self.output_queue.get()
 
-        rgb = cv2.cvtColor(output_packet["bgr"].getCvFrame(), cv2.COLOR_BGR2RGB) # type: ignore
+        self.bgr_image = output_packet["bgr"].getCvFrame()  # type: ignore
+
+        rgb = cv2.cvtColor(self.bgr_image, cv2.COLOR_BGR2RGB)
         colors = rgb.reshape(-1, 3).astype(np.float64) / 255.0
 
         raw_points = output_packet["pcl"].getPoints().astype(np.float64) # type: ignore
@@ -370,3 +373,5 @@ class OakManager:
             camera.update()
             camera_path = f"{path}/camera-{i}.drc"
             with open(camera_path, "wb") as f: f.write(compress_pcd(camera.point_cloud))
+            rgb_camera_path = f"{path}/camera-{i}_rgb.jpg"
+            cv2.imwrite(rgb_camera_path, cv2.cvtColor(camera.bgr_image, cv2.COLOR_BGR2RGB))
