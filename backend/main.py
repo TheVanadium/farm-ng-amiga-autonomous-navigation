@@ -26,9 +26,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[dict, None]:
     services = await setup_services(args=cli_args)
     yield services
 
-    if services["oak_manager"] is not None:
-        services["oak_manager"].camera_process.terminate() # type: ignore[unreachable]
-        services["oak_manager"].camera_process.join()
+    if services["oak_manager"] is not None: services["oak_manager"].shutdown()
 
 async def setup_services(args: argparse.Namespace) -> dict[str, Any]:
     # config with all the configs, then filter out services to pass to the events client manager
@@ -67,8 +65,8 @@ app.include_router(linefollow.router)
 # could use testing
 def handle_sigterm(signum: Any, frame: Any) -> None:
     if oak_manager is not None:
-        oak_manager.camera_process.terminate()
-        oak_manager.camera_process.join()
+        print("Received SIGTERM, shutting down oak manager...")
+        oak_manager.shutdown()
     sys.exit(0)
 signal.signal(signal.SIGTERM, handle_sigterm)
 

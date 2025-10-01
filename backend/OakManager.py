@@ -348,15 +348,30 @@ class OakManager:
         self._log.flush()
 
     def _start_cameras(self) -> None:
+        kill_now = False
         def handle_sigterm(signum, frame) -> None:
-            print("Received SIGTERM, stopping oak manager")
-            for camera in self._cameras: camera.shutdown()
+            nonlocal kill_now
+            kill_now = True
             sys.exit(0)
         signal.signal(signal.SIGTERM, handle_sigterm)
-        while True:
+        while kill_now is False:
             if os.getppid() == 1: sys.exit(1) # 1 means parent is gone
             try: self._handle_msg(self._queue.get(timeout=0.1)) # Blocking
             except Empty: pass
+
+    def shutdown(self) -> None:
+        # does shutdown nothing if camera processes aren't running (safety is handled in camera.shutdown())
+        # lots of print statements because we don't have good tests yet
+        for camera in self._cameras:
+            print(f"Shutting down camera {camera._camera_ip}...")
+            camera.shutdown()
+        if self.camera_process.is_alive():
+            print("Waiting for camera process to terminate...")
+            self.camera_process.join(timeout=10)
+            if self.camera_process.is_alive():
+                print("Camera process did not terminate within timeout.")
+            else:
+                print("Camera process terminated.")
 
     # this logic is extracted for future testing
     def _handle_msg(self, msg: dict) -> None:
@@ -373,5 +388,3 @@ class OakManager:
             camera.update()
             camera_path = f"{path}/camera-{i}.drc"
             with open(camera_path, "wb") as f: f.write(compress_pcd(camera.point_cloud))
-            rgb_camera_path = f"{path}/camera-{i}_rgb.jpg"
-            cv2.imwrite(rgb_camera_path, cv2.cvtColor(camera.bgr_image, cv2.COLOR_BGR2RGB))
