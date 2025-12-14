@@ -329,6 +329,9 @@ class OakManager:
             self._log = open(f"logs/oak_manager/{datetime.now().isoformat()}.log", "a")
             self._log.write(f"{datetime.now().isoformat()} - Starting OakManager\n")
 
+        # not sure if bug still exists, but:
+        # BUG: something weird with python processes doesn't allow the integration of initializing into _start_cameras, or else shutdown doesn't work
+        # properly and cameras get stuck
         self._cameras: List[Camera] = []
         device_infos = dai.Device.getAllAvailableDevices()
         print(f"Found {len(device_infos)} devices: {[device_info.name for device_info in device_infos]}")
