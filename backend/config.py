@@ -1,5 +1,5 @@
 # from farm_ng.core.event_client_manager import EventClientSubscriptionManager
-import json
+import json, os
 
 from pydantic import BaseModel
 from farm_ng_core_pybind import Pose3F64
@@ -36,7 +36,7 @@ LINES_DIR = "./lines/"
 POINTCLOUD_DATA_DIR = "./pointclouds/"
 
 # Camera configs
-CALIBRATION_DATA_DIR = "./backend/cameraBackend/calibration_data"
+CALIBRATION_DATA_DIR = "./backend/calibration_data"
 MIN_RANGE_MM = 100
 MAX_RANGE_MM = 1000
 
@@ -47,7 +47,7 @@ linear_regression_parameters = [1, 0]
 
 # Port
 PORT = 8042
-manifest_path = "./manifest.json"
+manifest_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "manifest.json")
 
 with open(manifest_path, "r") as manifest_file:
     data = json.load(manifest_file)

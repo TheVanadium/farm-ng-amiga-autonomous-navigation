@@ -7,7 +7,6 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
-from multiprocessing import Process, Queue
 from farm_ng.core.event_client_manager import EventClient, EventClientSubscriptionManager
 from farm_ng.core.event_service_pb2 import SubscribeRequest, EventServiceConfigList
 from farm_ng.core.uri_pb2 import Uri
@@ -15,11 +14,11 @@ from farm_ng.core.events_file_reader import proto_from_json_file
 from google.protobuf.json_format import MessageToJson  # type: ignore
 import uvicorn, config
 from routers import tracks, record, follow, linefollow
-from cameraBackend.oakManager import startCameras
+from OakManager import OakManager
 from typing import AsyncGenerator, Any, Optional
 
 global oak_manager
-oak_manager: Optional[Process] = None
+oak_manager: Optional[OakManager] = None
 
 
 @asynccontextmanager
@@ -27,9 +26,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[dict, None]:
     services = await setup_services(args=cli_args)
     yield services
 
-    if services["oak_manager"] is not None:
-        services["oak_manager"].terminate() # type: ignore[unreachable]
-        services["oak_manager"].join()
+    if services["oak_manager"] is not None: services["oak_manager"].shutdown()
 
 async def setup_services(args: argparse.Namespace) -> dict[str, Any]:
     # config with all the configs, then filter out services to pass to the events client manager
@@ -41,16 +38,13 @@ async def setup_services(args: argparse.Namespace) -> dict[str, Any]:
 
     event_manager = EventClientSubscriptionManager(config_list=service_config_list)
 
-    camera_msg_queue: Queue = Queue()
-    oak_manager = Process(target=startCameras,args=(camera_msg_queue, config.POINTCLOUD_DATA_DIR),daemon=True)
-    oak_manager.start()
+    oak_manager = OakManager()
 
     asyncio.create_task(event_manager.update_subscriptions())
 
     return {
         "event_manager": event_manager,
         "oak_manager": oak_manager,
-        "camera_msg_queue": camera_msg_queue,
         # Yield dict cannot be changed directly, but objects inside it can
         # So we use a sv item for all our non constant variables
         "sv": config.StateVars(),
@@ -71,8 +65,8 @@ app.include_router(linefollow.router)
 # could use testing
 def handle_sigterm(signum: Any, frame: Any) -> None:
     if oak_manager is not None:
-        oak_manager.terminate()
-        oak_manager.join()
+        print("Received SIGTERM, shutting down oak manager...")
+        oak_manager.shutdown()
     sys.exit(0)
 signal.signal(signal.SIGTERM, handle_sigterm)
 

@@ -16,3 +16,5 @@ lines/*
 !lines/.gitkeep
 
 .ruff_cache/
+
+logs/
