@@ -69,6 +69,7 @@ class Camera:
 
         self.point_cloud = o3d.geometry.PointCloud()
         self.bgr_image: np.ndarray = np.zeros((1, 1, 3), dtype=np.uint8)
+        self.depth_image: np.ndarray = np.zeros((1, 1), dtype=np.uint16)
 
         self._load_calibration()
 
@@ -144,6 +145,7 @@ class Camera:
         tof = pipeline.create(dai.node.ToF)
         camTof = pipeline.create(dai.node.Camera)
         sync = pipeline.create(dai.node.Sync)
+        syncDepth = pipeline.create(dai.node.Sync)
         align = pipeline.create(dai.node.ImageAlign)
         out = pipeline.create(dai.node.XLinkOut)
         pointcloud = pipeline.create(dai.node.PointCloud)
@@ -170,6 +172,9 @@ class Camera:
         camRgb.setIspScale(1, 2)
 
         out.setStreamName("out")
+
+        xoutDdepth = pipeline.createXLinkOut()
+        xoutDdepth.setStreamName("depth")
 
         sync.setSyncThreshold(timedelta(seconds=(1 / self.PIPELINE_FPS)))
 
@@ -208,6 +213,10 @@ class Camera:
     def update(self):
         # we need to type ignore this because depthAI's output queue is generic and thus ambiguous
         output_packet = self.output_queue.get()
+
+        depth_queue = self._device.getOutputQueue(name="depth", maxSize=4, blocking=False)
+        depth_frame = depth_queue.get()
+        self.depth_image = depth_frame.getFrame()  # type: ignore
 
         self.bgr_image = output_packet["bgr"].getCvFrame()  # type: ignore
 
@@ -275,6 +284,15 @@ class Camera:
         self._http_streaming_server.serve_forever()
         self._http_streaming_server.server_close()
         print(f"RGB stream at 127.0.0.1:{self.stream_port} stopped")
+
+    def save_rgbd(self, path: str) -> None:
+        # path is a folder
+        if not os.path.exists(path): os.makedirs(path)
+
+        rgb_path = f"{path}/rgb_.png"
+        depth_path = f"{path}/depth_.png"
+        cv2.imwrite(rgb_path, self.bgr_image)
+        cv2.imwrite(depth_path, self.depth_image)
 
 
 def compress_pcd(pcd: o3d.geometry.PointCloud) -> bytes:
@@ -379,15 +397,24 @@ class OakManager:
     # this logic is extracted for future testing
     def _handle_msg(self, msg: dict) -> None:
         action = msg.get("action", "No action")
-        if action != "save_point_cloud":
-            print(f"Unknown message: {msg}")
-            return
-        line_name = msg.get("line_name", "X")
-        row_number = msg.get("row_number", "X")
-        capture_number = msg.get("capture_number", "X")
-        path = f"{POINTCLOUD_DATA_DIR}/{line_name}/row_{row_number}/capture_{capture_number}"
-        if not os.path.exists(path): os.makedirs(path)
-        for i, camera in enumerate(self._cameras):
-            camera.update()
-            camera_path = f"{path}/camera-{i}.drc"
-            with open(camera_path, "wb") as f: f.write(compress_pcd(camera.point_cloud))
+        match action:
+            case "save_point_cloud":
+                line_name = msg.get("line_name", "X")
+                row_number = msg.get("row_number", "X")
+                capture_number = msg.get("capture_number", "X")
+                path = f"{POINTCLOUD_DATA_DIR}/{line_name}/row_{row_number}/capture_{capture_number}"
+                if not os.path.exists(path): os.makedirs(path)
+                for i, camera in enumerate(self._cameras):
+                    camera.update()
+                    camera_path = f"{path}/camera-{i}.drc"
+                    with open(camera_path, "wb") as f: f.write(compress_pcd(camera.point_cloud))
+            case "save_rgbd":
+                line_name = msg.get("line_name", "X")
+                row_number = msg.get("row_number", "X")
+                capture_number = msg.get("capture_number", "X")
+                path = f"{POINTCLOUD_DATA_DIR}/{line_name}/row_{row_number}/capture_{capture_number}/rgbd"
+                for i, camera in enumerate(self._cameras):
+                    camera.update()
+                    camera_path = f"{path}/camera-{i}"
+                    camera.save_rgbd(camera_path)
+            case _: print(f"Unknown message: {msg}")
